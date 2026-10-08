@@ -9,6 +9,10 @@
     {{if eq .PR.State "open"}}
     {{if .Gone}}<p class="error">A branch of this pull request no longer exists.</p>
     {{else}}
+    {{if .Checks}}
+    <h2>Checks</h2>
+    <ul>{{range .Checks}}<li><a href="{{$.Pull.ChecksURL}}/{{.ID}}">{{.Job}}</a>: {{.Status}}</li>{{end}}</ul>
+    {{end}}
     <h2>Commits ({{len .Commits}})</h2>
     <ul class="commits">{{range .Commits}}<li><code>{{printf "%.8s" .SHA}}</code> {{.Subject}} <span class="meta">{{.Author}}</span></li>{{end}}</ul>
     {{if .Mergeable}}<p class="notice">No conflicts with the base branch.</p>{{else}}<p class="error">This branch conflicts with the base branch.</p>{{end}}

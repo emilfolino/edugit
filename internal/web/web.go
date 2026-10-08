@@ -55,6 +55,8 @@ type Options struct {
 	PullGit PullGit
 	// Issues enables the issue tracker; it needs Pulls (for repo loading).
 	Issues IssueStore
+	// CI enables the check pages and PR checks; it needs Pulls.
+	CI CIStore
 	// Browse enables the read-only repository browser; it needs Pulls.
 	Browse BrowseGit
 	// Editor enables committing from the browser; it needs Browse. Policy
@@ -156,6 +158,7 @@ type page struct {
 	Pull          *pullView
 	Issues        *issuesView
 	Issue         *issueView
+	CI            *ciView
 	Browse        *browseView
 	Edit          *editView
 }

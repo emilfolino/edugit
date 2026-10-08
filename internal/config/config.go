@@ -34,6 +34,12 @@ type Config struct {
 	StaffDomain, StudentDomain string
 	// AdminEmails are emails promoted to global admin on login.
 	AdminEmails []string
+	// CIRuntime is the container command (e.g. "podman") that runs CI jobs;
+	// empty disables CI. CINetwork lets jobs that ask for it use the network.
+	CIRuntime string
+	CINetwork bool
+	// CIWorkers is the number of concurrent CI jobs.
+	CIWorkers int
 	// DevLogin enables a passwordless sign-in form for local development.
 	// It requires a loopback Addr and no PublicURL.
 	DevLogin bool
@@ -60,6 +66,9 @@ func Load(args []string, getenv func(string) string, errOut io.Writer) (Config, 
 	fs.StringVar(&c.StudentDomain, "student-domain", envOr(getenv, "EDUGIT_STUDENT_DOMAIN", ""), "student email domain (env EDUGIT_STUDENT_DOMAIN)")
 	admins := envOr(getenv, "EDUGIT_ADMIN_EMAILS", "")
 	fs.StringVar(&admins, "admin-emails", admins, "comma-separated global admin emails (env EDUGIT_ADMIN_EMAILS)")
+	fs.StringVar(&c.CIRuntime, "ci-runtime", envOr(getenv, "EDUGIT_CI_RUNTIME", ""), "container command that runs CI jobs, e.g. podman; empty disables CI (env EDUGIT_CI_RUNTIME)")
+	fs.BoolVar(&c.CINetwork, "ci-network", false, "let CI jobs that request it use the network")
+	fs.IntVar(&c.CIWorkers, "ci-workers", 2, "concurrent CI jobs")
 	fs.BoolVar(&c.DevLogin, "dev-login", false, "passwordless local sign-in for development; loopback only")
 	fs.DurationVar(&c.ShutdownTimeout, "shutdown-timeout", c.ShutdownTimeout, "graceful shutdown timeout")
 	if err := fs.Parse(args); err != nil {

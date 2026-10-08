@@ -1,0 +1,19 @@
+{{template "head" .}}
+    {{with .CI}}
+    <h1>Checks</h1>
+    <p class="meta"><a href="/courses/{{$.Course.Slug}}">{{$.Course.Title}}</a> · {{.Repo}} ·
+      <a href="{{.Base}}/../tree">{{$.L.T "browse.code"}}</a> · <a href="{{.Base}}">{{$.L.T "browse.ci"}}</a></p>
+    {{if .Run}}
+    <h2>{{.Run.Job}}: {{.Run.Status}}</h2>
+    <p class="meta"><code>{{.Run.Branch}}</code> @ <code>{{.Run.SHA}}</code></p>
+    <pre>{{.Run.Log}}</pre>
+    {{else if .Runs}}
+    <table>
+      <thead><tr><th>Job</th><th>Branch</th><th>Commit</th><th>Status</th></tr></thead>
+      <tbody>{{range .Runs}}
+      <tr><td><a href="{{$.CI.Base}}/{{.ID}}">{{.Job}}</a></td><td>{{.Branch}}</td><td><code>{{slice .SHA 0 7}}</code></td><td>{{.Status}}</td></tr>
+      {{end}}</tbody>
+    </table>
+    {{else}}<p>No checks have run. Add <code>.edugit/ci.json</code> to the repository to define jobs.</p>{{end}}
+    {{end}}
+{{template "foot"}}

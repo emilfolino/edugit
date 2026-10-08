@@ -72,6 +72,10 @@ type pullView struct {
 	CanReview bool
 	// CanRequest is set for staff and the author, who may ask for reviewers.
 	CanRequest bool
+
+	// Checks are the CI runs of the head commit.
+	Checks    []store.CIRun
+	ChecksURL string
 }
 
 func (s *Server) routePulls(mux *http.ServeMux) {
@@ -315,6 +319,13 @@ func (s *Server) renderPull(w http.ResponseWriter, r *http.Request, pc pullCtx, 
 			if err != nil {
 				s.fail(w, "pull details", err)
 				return
+			}
+			if s.opts.CI != nil {
+				// A failure to load checks must not hide the PR.
+				if v.Checks, err = s.opts.CI.CIRunsForSHA(ctx, pc.repo.ID, hs); err != nil {
+					s.log.Error("load checks", "err", err)
+				}
+				v.ChecksURL = "/courses/" + pc.c.Slug + "/repos/" + pc.repo.Name + "/ci"
 			}
 		}
 	}

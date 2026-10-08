@@ -18,6 +18,7 @@ import (
 
 	"github.com/emilfolino/edugit/internal/auth"
 	"github.com/emilfolino/edugit/internal/authz"
+	"github.com/emilfolino/edugit/internal/ci"
 	"github.com/emilfolino/edugit/internal/config"
 	"github.com/emilfolino/edugit/internal/gitserver"
 	"github.com/emilfolino/edugit/internal/hooks"
@@ -73,7 +74,16 @@ func run() error {
 			return err
 		}
 		pub := &sites.Publisher{Root: filepath.Join(cfg.DataDir, "sites"), Git: repos}
-		sink = sites.Multi{pullSink{db}, sites.Sink{DB: db, Pub: pub}}
+		multi := sites.Multi{pullSink{db}, sites.Sink{DB: db, Pub: pub}}
+		var runner *ci.Runner
+		if cfg.CIRuntime != "" {
+			runner = &ci.Runner{Store: db, Git: repos, Runtime: cfg.CIRuntime, AllowNetwork: cfg.CINetwork, Workers: cfg.CIWorkers, Log: log}
+			if err := runner.Start(ctx); err != nil {
+				return fmt.Errorf("start ci: %w", err)
+			}
+			multi = append(multi, runner)
+		}
+		sink = multi
 		opts = web.Options{
 			Sessions:    sessions,
 			Tokens:      db,
@@ -85,6 +95,7 @@ func run() error {
 			Pulls:       db,
 			PullGit:     repos,
 			Issues:      db,
+			CI:          ciStore(runner, db),
 			Browse:      repos,
 			Editor:      repos,
 			Policy:      hooks.Protection{Source: ruleSource{db}},
@@ -228,4 +239,13 @@ func syncLocks(ctx context.Context, db *store.Store, log *slog.Logger) {
 		case <-t.C:
 		}
 	}
+}
+
+// ciStore returns db when CI is enabled and a true nil interface otherwise,
+// so the web layer's nil check works.
+func ciStore(r *ci.Runner, db *store.Store) web.CIStore {
+	if r == nil {
+		return nil
+	}
+	return db
 }

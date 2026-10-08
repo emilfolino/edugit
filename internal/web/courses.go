@@ -65,6 +65,9 @@ func (s *Server) routeCourses(mux *http.ServeMux) {
 		if s.opts.Issues != nil {
 			s.routeIssues(mux)
 		}
+		if s.opts.CI != nil {
+			s.routeCI(mux)
+		}
 		if s.opts.Browse != nil {
 			s.routeBrowse(mux)
 			if s.opts.Sites != nil && s.opts.SiteDB != nil && s.opts.Repos != nil {

@@ -17,18 +17,22 @@ const (
 	maxExportBytes = 256 << 20
 )
 
-// Export writes the tree at dir (empty for the root) of branch into dest,
+// Export writes the tree at dir (empty for the root) of ref (a branch or
+// commit id) into dest,
 // which must exist. Only regular files and directories are written: symlinks
 // and special files are skipped so the result cannot point outside dest.
-func (r *Repos) Export(ctx context.Context, course, name, branch, dir, dest string) error {
+func (r *Repos) Export(ctx context.Context, course, name, ref, dir, dest string) error {
 	repo, err := r.Path(course, name)
 	if err != nil {
 		return err
 	}
-	if !validBranch(branch) || !validPath(dir) {
-		return fmt.Errorf("%w: branch or dir", ErrInvalidName)
+	if !validRef(ref) || !validPath(dir) {
+		return fmt.Errorf("%w: ref or dir", ErrInvalidName)
 	}
-	spec := "refs/heads/" + branch
+	spec := ref
+	if !isSHA(ref) {
+		spec = "refs/heads/" + ref
+	}
 	if dir != "" {
 		spec += ":" + dir
 	}
