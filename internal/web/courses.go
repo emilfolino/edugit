@@ -60,6 +60,9 @@ func (s *Server) routeCourses(mux *http.ServeMux) {
 	}
 	if s.opts.Repos != nil && s.opts.Pulls != nil && s.opts.PullGit != nil {
 		s.routePulls(mux)
+		if s.opts.Issues != nil {
+			s.routeIssues(mux)
+		}
 		if s.opts.Browse != nil {
 			s.routeBrowse(mux)
 		}

@@ -381,6 +381,7 @@ func (s *Server) pullMerge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.audit(r, u, "pull.merge", pc.c.Slug+"/"+pc.repo.Name, "#"+itoa(pull.Number)+" "+strategy)
+	s.closeReferencedIssues(r, pc, pull)
 	http.Redirect(w, r, pc.base()+"/"+itoa(pull.Number), http.StatusSeeOther)
 }
 

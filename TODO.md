@@ -42,7 +42,7 @@ Numbered backlog for edugit. Reference items by number. Mark done with `[x]`.
 
 16. [x] **Pull requests.** *(done: `/courses/<c>/repos/<r>/pulls` lists, opens, views, merges (merge/squash/rebase via `gitserver.Merge` plumbing), closes and reopens PRs with unified/split diffs, commit list and conflict detection; pushes touch or close PRs through the hooks `Sink`; staff open the feedback PR (`feedback` into `main`). Required approvals come with #17.)* Create from branch, diff view (unified/split), commit list, status, merge strategies (merge/squash/rebase) done via git plumbing in a temporary worktree or `git merge-tree`; conflict detection; update on push through hooks.
 17. [x] **Code review.** Inline and general comments, review states (comment/approve/request changes), required approvals for protected branches, suggestions, resolve threads, reviewer assignment (including peer review among students).
-18. [ ] **Issues and project basics.** Issues with labels/assignees/milestones linked to PRs (`Fixes #n`); simple board optional.
+18. [x] **Issues and project basics.** Issues with labels/assignees/milestones linked to PRs (`Fixes #n`); simple board optional.
 
 ## Publishing & CI
 

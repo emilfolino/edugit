@@ -80,6 +80,7 @@ func run() error {
 			Assignments: db,
 			Pulls:       db,
 			PullGit:     repos,
+			Issues:      db,
 			Browse:      repos,
 			Audit:       db,
 			Domains:     auth.Domains{Staff: cfg.StaffDomain, Student: cfg.StudentDomain},

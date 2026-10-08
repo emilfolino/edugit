@@ -1,0 +1,46 @@
+{{template "head" .}}
+    {{with .Issue}}
+    {{$i := .Issue}}
+    <h1>#{{$i.Number}} {{$i.Title}}</h1>
+    <p class="meta"><a href="{{.Base}}">Issues</a> · {{$i.State}} · {{$i.Author}}</p>
+    {{if $.Error}}<p class="error" role="alert">{{$.Error}}</p>{{end}}
+    {{if $i.Body}}<pre class="body">{{$i.Body}}</pre>{{end}}
+    <p>Labels: {{range $i.Labels}}<code>{{.}}</code> {{else}}none{{end}}<br>
+       Assignees: {{range $i.Assignees}}{{.}} {{else}}none{{end}}<br>
+       Milestone: {{if $i.Milestone}}{{$i.Milestone}}{{else}}none{{end}}</p>
+    {{if .CanManage}}
+    <form method="post" class="inline" action="{{.Base}}/{{$i.Number}}/meta">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <input name="value" placeholder="label, username or milestone" required>
+      <button name="op" value="label">Add label</button>
+      <button name="op" value="unlabel">Remove label</button>
+      <button name="op" value="assign">Assign</button>
+      <button name="op" value="unassign">Unassign</button>
+    </form>
+    <form method="post" class="inline" action="{{.Base}}/{{$i.Number}}/meta">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <input type="hidden" name="op" value="milestone">
+      <label>Milestone <select name="value"><option value="">none</option>{{range .Milestones}}<option{{if eq .Title $i.Milestone}} selected{{end}}>{{.Title}}</option>{{end}}</select></label>
+      <button>Set</button>
+    </form>
+    {{end}}
+    <h2>Discussion</h2>
+    {{range .Comments}}
+    <div class="comment"><p class="meta">{{.Author}}</p><pre class="body">{{.Body}}</pre></div>
+    {{else}}<p>No comments yet.</p>{{end}}
+    {{if .CanIssue}}
+    <form method="post" class="stack" action="{{.Base}}/{{$i.Number}}/comment">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <label>Comment <textarea name="body" rows="4" required></textarea></label>
+      <button>Comment</button>
+    </form>
+    {{end}}
+    {{if .CanState}}
+    <form method="post" action="{{.Base}}/{{$i.Number}}/state">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      {{if eq $i.State "open"}}<button name="state" value="closed">Close issue</button>
+      {{else}}<button name="state" value="open">Reopen issue</button>{{end}}
+    </form>
+    {{end}}
+    {{end}}
+{{template "foot"}}

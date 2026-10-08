@@ -77,6 +77,9 @@ func TestCan(t *testing.T) {
 
 		{"archived blocks member write", roles(RoleStudent), RepoWrite, repo(KindStudent, false, true, true), false},
 		{"archived blocks admin write", admin, RepoWrite, repo(KindStudent, false, true, false), false},
+		{"archived blocks issues", roles(RoleStudent), RepoIssue, repo(KindStudent, false, true, true), false},
+		{"member may open issues", roles(RoleStudent), RepoIssue, repo(KindStudent, false, false, true), true},
+		{"stranger may not open issues", roles(RoleStudent), RepoIssue, repo(KindStudent, false, false, false), false},
 		{"archived still readable", roles(RoleStudent), RepoRead, repo(KindStudent, false, true, true), true},
 
 		{"requested peer reads repo", roles(RoleStudent), RepoRead, reviewer(repo(KindStudent, false, false, false)), true},

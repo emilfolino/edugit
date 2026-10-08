@@ -52,6 +52,8 @@ type Options struct {
 	// Pulls and PullGit enable pull requests; they need Repos.
 	Pulls   PullStore
 	PullGit PullGit
+	// Issues enables the issue tracker; it needs Pulls (for repo loading).
+	Issues IssueStore
 	// Browse enables the read-only repository browser; it needs Pulls.
 	Browse BrowseGit
 	// Audit receives security-relevant events and serves the admin viewer;
@@ -140,6 +142,8 @@ type page struct {
 	Asg           *assignmentView
 	Pulls         *pullsView
 	Pull          *pullView
+	Issues        *issuesView
+	Issue         *issueView
 	Browse        *browseView
 }
 

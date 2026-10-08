@@ -69,7 +69,7 @@ func TestPulls(t *testing.T) {
 	git := &fakeGit{branches: map[string]string{"main": "m1", "topic": "t1", "feedback": "f1"}, ahead: 1}
 	srv, err := New(slog.New(slog.NewTextHandler(io.Discard, nil)), Options{
 		Sessions: sess, Tokens: db, Courses: db, Audit: db, Repos: db, Disk: &fakeDisk{}, Assignments: db,
-		Pulls: db, PullGit: git,
+		Pulls: db, PullGit: git, Issues: db,
 		Authz:   &authz.Authorizer{Source: db},
 		Domains: auth.Domains{Staff: "bth.se", Student: "student.bth.se"}, PublicURL: "https://x.test", LoginURL: "/saml/login",
 	})
@@ -193,4 +193,37 @@ func TestPulls(t *testing.T) {
 	expect(a(base+"/2/close", url.Values{}), http.StatusSeeOther, "close")
 	expect(a(base+"/2/close", url.Values{}), http.StatusBadRequest, "close twice")
 	expect(a(base+"/2/reopen", url.Values{}), http.StatusSeeOther, "reopen")
+
+	// Issues.
+	ib := "/courses/oop/repos/lab1-a/issues"
+	expect(b(ib, nil), http.StatusNotFound, "stranger lists issues")
+	expect(b(ib, url.Values{"title": {"x"}}), http.StatusNotFound, "stranger opens issue")
+	expect(a(ib, url.Values{"title": {" "}}), http.StatusBadRequest, "empty title")
+	expect(a(ib, url.Values{"title": {"Crash"}, "body": {"it <b>breaks</b>"}}), http.StatusSeeOther, "open issue")
+	expect(a(ib, url.Values{"title": {"Second"}}), http.StatusSeeOther, "open second issue")
+	w = a(ib+"/1", nil)
+	expect(w, http.StatusOK, "view issue")
+	if body := w.Body.String(); !strings.Contains(body, "Crash") || strings.Contains(body, "<b>breaks</b>") {
+		t.Fatalf("issue view: %s", body)
+	}
+	expect(a(ib+"/9", nil), http.StatusNotFound, "unknown issue")
+	expect(a(ib+"/1/comment", url.Values{"body": {"more"}}), http.StatusSeeOther, "comment")
+	expect(a(ib+"/1/comment", url.Values{"body": {""}}), http.StatusBadRequest, "empty comment")
+	expect(b(ib+"/1/meta", url.Values{"op": {"label"}, "value": {"bug"}}), http.StatusNotFound, "stranger labels")
+	expect(teacher(ib+"/1/meta", url.Values{"op": {"label"}, "value": {"bug"}}), http.StatusSeeOther, "teacher labels")
+	expect(teacher(ib+"/1/meta", url.Values{"op": {"assign"}, "value": {"nobody"}}), http.StatusBadRequest, "assign stranger")
+	expect(teacher(ib+"/1/meta", url.Values{"op": {"assign"}, "value": {"a"}}), http.StatusSeeOther, "assign")
+	expect(teacher(ib+"/1/meta", url.Values{"op": {"milestone"}, "value": {"v1"}}), http.StatusBadRequest, "unknown milestone")
+	expect(teacher(ib+"/milestones", url.Values{"title": {"v1"}, "due": {"soon"}}), http.StatusBadRequest, "bad due date")
+	expect(teacher(ib+"/milestones", url.Values{"title": {"v1"}, "due": {"2026-12-01"}}), http.StatusSeeOther, "milestone")
+	expect(teacher(ib+"/1/meta", url.Values{"op": {"milestone"}, "value": {"v1"}}), http.StatusSeeOther, "set milestone")
+	if body := a(ib+"?label=bug", nil).Body.String(); !strings.Contains(body, "Crash") || strings.Contains(body, "Second") {
+		t.Fatalf("label filter: %s", body)
+	}
+	expect(a(ib+"/1/state", url.Values{"state": {"closed"}}), http.StatusSeeOther, "author closes")
+	expect(b(ib+"/1/state", url.Values{"state": {"open"}}), http.StatusNotFound, "stranger reopens")
+	expect(teacher(ib+"/1/state", url.Values{"state": {"open"}}), http.StatusSeeOther, "staff reopens")
+	if body := a(ib, nil).Body.String(); !strings.Contains(body, "Crash") {
+		t.Fatalf("open list: %s", body)
+	}
 }

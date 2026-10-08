@@ -50,6 +50,9 @@ const (
 	// RepoReview covers commenting on and approving pull requests. Unlike
 	// RepoWrite it is open to requested reviewers and survives archiving.
 	RepoReview Action = "repo.review"
+	// RepoIssue covers opening and commenting on issues: whoever can read the
+	// repo, until it is archived.
+	RepoIssue Action = "repo.issue"
 
 	AssignmentManage Action = "assignment.manage" // create, bulk generate, extensions; staff
 	AssignmentAccept Action = "assignment.accept" // enrolled students only, never admin bypass
@@ -107,7 +110,7 @@ func Can(p Principal, a Action, res Resource) bool {
 	if a == AssignmentAccept {
 		return p.Roles[res.CourseID] == RoleStudent
 	}
-	if a == RepoWrite && res.Archived {
+	if (a == RepoWrite || a == RepoIssue) && res.Archived {
 		return false
 	}
 	if p.IsAdmin {
@@ -127,8 +130,8 @@ func Can(p Principal, a Action, res Resource) bool {
 		return staff
 	case RepoReview:
 		return res.Repo && role != RoleNone && (staff || res.IsMember || res.IsReviewer)
-	case RepoRead, RepoWrite:
-		if a == RepoRead && res.IsReviewer && res.Repo && role != RoleNone {
+	case RepoRead, RepoWrite, RepoIssue:
+		if a != RepoWrite && res.IsReviewer && res.Repo && role != RoleNone {
 			return true
 		}
 		if !res.Repo || role == RoleNone {
@@ -139,7 +142,7 @@ func Can(p Principal, a Action, res Resource) bool {
 		}
 		switch res.Kind {
 		case KindTeacher:
-			return a == RepoRead && res.IsTemplate
+			return a != RepoWrite && res.IsTemplate
 		case KindStudent, KindTeam:
 			return res.IsMember
 		}
