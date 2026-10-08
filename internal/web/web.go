@@ -42,6 +42,10 @@ type Options struct {
 	// with Sessions.
 	Courses CourseStore
 	Authz   *authz.Authorizer
+	// Repos and Disk enable repository management on the course page; both
+	// are required together with Courses.
+	Repos RepoStore
+	Disk  RepoDisk
 	// Audit receives security-relevant events and serves the admin viewer;
 	// nil disables both.
 	Audit Auditor
@@ -115,6 +119,8 @@ type page struct {
 	Entries       []store.AuditEntry
 	Next          int64
 	Filter        string
+	Repos         []repoView
+	CanCreateRepo bool
 }
 
 func (s *Server) newPage(r *http.Request, title string) page {

@@ -11,6 +11,42 @@
       <button>{{if .Course.Archived}}Restore course{{else}}Archive course{{end}}</button>
     </form>
     {{end}}
+    {{if or .Repos .CanCreateRepo}}
+    <h2>Repositories</h2>
+    {{if .Repos}}
+    <table>
+      <thead><tr><th>Name</th><th>Kind</th><th>Clone URL</th><th></th></tr></thead>
+      <tbody>
+      {{range .Repos}}
+      <tr>
+        <td>{{.Name}}{{if .Archived}} <span class="meta">archived</span>{{end}}</td>
+        <td>{{.Kind}}{{if .IsTemplate}} · template{{end}}</td>
+        <td><code>{{.CloneURL}}</code></td>
+        <td>
+          {{if .CanAdmin}}
+          <form method="post" action="/courses/{{$.Course.Slug}}/repos/{{.Name}}/template" class="inline">
+            <input type="hidden" name="csrf" value="{{$.CSRF}}">
+            <input type="hidden" name="template" value="{{if .IsTemplate}}0{{else}}1{{end}}">
+            <button>{{if .IsTemplate}}Unmark template{{else}}Mark as template{{end}}</button>
+          </form>
+          {{end}}
+        </td>
+      </tr>
+      {{end}}
+      </tbody>
+    </table>
+    {{else}}
+    <p>No repositories yet.</p>
+    {{end}}
+    {{if .CanCreateRepo}}
+    <form method="post" action="/courses/{{.Course.Slug}}/repos" class="stack">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <label>Name <input name="name" required maxlength="100" pattern="[a-z0-9][a-z0-9._\-]*"></label>
+      <label><input type="checkbox" name="template" value="1"> Template (visible to students, source for assignments)</label>
+      <button>Create repository</button>
+    </form>
+    {{end}}
+    {{end}}
     {{if .CanRoster}}
     <h2>Roster</h2>
     <table>

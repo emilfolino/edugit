@@ -51,6 +51,10 @@ func (s *Server) routeCourses(mux *http.ServeMux) {
 	mux.HandleFunc("POST /courses/{slug}/remove", s.removeMember)
 	mux.HandleFunc("POST /courses/{slug}/invite", s.createInvite)
 	mux.HandleFunc("POST /courses/{slug}/invite/revoke", s.revokeInvite)
+	if s.opts.Repos != nil && s.opts.Disk != nil {
+		mux.HandleFunc("POST /courses/{slug}/repos", s.createRepo)
+		mux.HandleFunc("POST /courses/{slug}/repos/{repo}/template", s.setTemplate)
+	}
 	mux.HandleFunc("GET /join/{token}", s.joinPage)
 	mux.HandleFunc("POST /join/{token}", s.join)
 }
@@ -113,6 +117,14 @@ func (s *Server) renderCourse(w http.ResponseWriter, r *http.Request, u store.Us
 	p.Course = c
 	p.CanManage = authz.Can(pr, authz.CourseManage, res)
 	p.CanRoster = authz.Can(pr, authz.RosterView, res)
+	if s.opts.Repos != nil {
+		var err error
+		if p.Repos, err = s.repoViews(r, u, c, pr); err != nil {
+			s.fail(w, "list repos", err)
+			return
+		}
+		p.CanCreateRepo = s.opts.Disk != nil && !c.Archived && authz.Can(pr, authz.RepoCreate, res)
+	}
 	if p.CanRoster {
 		var err error
 		if p.Roster, err = s.opts.Courses.Roster(r.Context(), c.ID); err != nil {
