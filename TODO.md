@@ -55,5 +55,5 @@ Numbered backlog for edugit. Reference items by number. Mark done with `[x]`.
 22. [ ] **Security review.** Path traversal in repo handling, command injection when shelling out to git, SAML validation, CSRF, XSS in rendered Markdown/diffs, sandbox escapes. Rate limiting.
 23. [ ] **Testing strategy.** Unit tests, integration tests using real `git` against temp dirs, end-to-end flow test (SAML mock IdP -> create course -> assignment -> student PR -> merge -> site publish).
 24. [ ] **Import/export.** Course export, optional GitHub Classroom import (per Q5).
-25. [ ] **Deployment.** Single-binary packaging, systemd unit, reverse proxy/TLS guidance, backups of SQLite + repos, upgrade/migration procedure, monitoring/health endpoint, Dockerfile optional.
+25. [ ] **Deployment.** Default: plain systemd service (unprivileged user, hardening options) behind a reverse proxy (Caddy/nginx) for TLS, data in `/var/lib/edugit`; Dockerfile is optional with `/data` as a volume. The CI runner (#20) must be isolated from the server process/host. Single-binary packaging, systemd unit, reverse proxy/TLS guidance, backups of SQLite + repos, upgrade/migration procedure, monitoring/health endpoint, Dockerfile optional.
 26. [ ] **Documentation.** Admin guide, teacher guide, student guide (including a git/GitHub Flow primer), contributor guide.
