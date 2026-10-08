@@ -4,7 +4,7 @@ A self-hosted Git platform built for software engineering education.
 
 edugit lets teachers run courses where students work the way professionals do: branch, open a pull request, get a review, merge. It is intended as a replacement for GitHub Campus/Enterprise, designed around courses, assignments and teaching from the start rather than adapted to them.
 
-> **Status: early development.** The project scaffold runs (config, HTTP server, embedded UI shell, health endpoint). Git hosting, auth and courses are not implemented yet. Design decisions are settled and the work is tracked in [`TODO.md`](TODO.md).
+> **Status: early development.** The project scaffold runs (config, HTTP server, embedded UI shell, health endpoint) and the SQLite metadata store with its initial schema is in place. Git hosting, auth and courses are not implemented yet. Design decisions are settled and the work is tracked in [`TODO.md`](TODO.md).
 
 ## Goals
 
@@ -43,6 +43,7 @@ Student code execution (CI and autograding) is a separate, sandboxed component a
 
 - `cmd/edugit`: entrypoint (wiring only)
 - `internal/config`: flag/env configuration and logger
+- `internal/store`: SQLite store (pure-Go driver) with embedded forward-only migrations
 - `internal/web`: HTTP handlers, templates and static assets (embedded)
 - [`TODO.md`](TODO.md): numbered implementation backlog and open questions
 - [`STYLE.md`](STYLE.md): code style, based on the official Go guidance
@@ -66,6 +67,14 @@ Configuration via flags or environment (flags win):
 | `-addr` | `EDUGIT_ADDR` | `:8080` |
 | `-data-dir` | `EDUGIT_DATA_DIR` | `./data` |
 | `-log-level` | `EDUGIT_LOG_LEVEL` | `info` |
+
+## Backup and restore
+
+All state is in the data directory: `edugit.db` (SQLite, WAL mode) and the bare repositories.
+
+- **Database:** take a consistent snapshot while the server runs with `sqlite3 data/edugit.db "VACUUM INTO '/backups/edugit-$(date +%F).db'"`. Do not copy `edugit.db` alone while running; WAL files (`-wal`, `-shm`) would be missed.
+- **Repositories:** back up the repos directory with a filesystem snapshot or `rsync`; git repos tolerate this well, but a snapshot is safest.
+- **Restore:** stop the server, replace `edugit.db` (and remove stale `-wal`/`-shm` files) and the repos directory from the same backup point, then start. Pending migrations are applied automatically on start.
 
 ## Contributing
 

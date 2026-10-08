@@ -8,10 +8,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
 	"github.com/emilfolino/edugit/internal/config"
+	"github.com/emilfolino/edugit/internal/store"
 	"github.com/emilfolino/edugit/internal/web"
 )
 
@@ -33,6 +35,15 @@ func run() error {
 		return fmt.Errorf("create data dir: %w", err)
 	}
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	db, err := store.Open(ctx, filepath.Join(cfg.DataDir, "edugit.db"))
+	if err != nil {
+		return fmt.Errorf("open store: %w", err)
+	}
+	defer db.Close()
+
 	ui, err := web.New(log)
 	if err != nil {
 		return fmt.Errorf("init web: %w", err)
@@ -43,9 +54,6 @@ func run() error {
 		Handler:           ui.Handler(),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
-
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
 
 	errc := make(chan error, 1)
 	go func() {
