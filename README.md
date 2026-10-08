@@ -4,7 +4,7 @@ A self-hosted Git platform built for software engineering education.
 
 edugit lets teachers run courses where students work the way professionals do: branch, open a pull request, get a review, merge. It is intended as a replacement for GitHub Campus/Enterprise, designed around courses, assignments and teaching from the start rather than adapted to them.
 
-> **Status: early development.** The project scaffold runs (config, HTTP server, embedded UI shell, health endpoint) the SQLite metadata store with its initial schema is in place, and the Git smart-HTTP layer (clone, fetch, push, repo lifecycle, GC) and the git hooks bridge (branch protection, push events) are implemented as libraries, pending mounting alongside repo creation (#10). SAML sign-in (Microsoft Entra ID) works end to end: cookie sessions, CSRF protection and personal access tokens (`/account/tokens`, used as the Git HTTP password) are in place. Course-scoped authorization (`Can`) exists as a library; courses, repos and enrollment UI are not implemented yet. Design decisions are settled and the work is tracked in [`TODO.md`](TODO.md).
+> **Status: early development.** The project scaffold runs (config, HTTP server, embedded UI shell, health endpoint) the SQLite metadata store with its initial schema is in place, and the Git smart-HTTP layer (clone, fetch, push, repo lifecycle, GC) and the git hooks bridge (branch protection, push events) are implemented as libraries, pending mounting alongside repo creation (#10). SAML sign-in (Microsoft Entra ID) works end to end: cookie sessions, CSRF protection and personal access tokens (`/account/tokens`, used as the Git HTTP password) are in place. Course management works: admins create courses, staff enrol students by email list/CSV or invite link, and course admins assign roles (`/courses`). Repos, assignments and the rest are not implemented yet. Design decisions are settled and the work is tracked in [`TODO.md`](TODO.md).
 
 ## Goals
 
@@ -24,7 +24,7 @@ edugit lets teachers run courses where students work the way professionals do: b
 | Teacher | Per course | Maintains material, assignments and reviews student work |
 | Student | Per course | Works on assignments through pull requests |
 
-Roles are assigned from SAML attributes and/or manual enrollment.
+Roles live in edugit: a global admin creates a course and names its course admin, who assigns teachers; staff enrol students by email (bound on first login), CSV import or invite link. Email domain is only an eligibility hint (`@student` addresses never hold staff roles).
 
 ## Planned stack
 
@@ -64,6 +64,15 @@ make test
 make run     # listens on :8080
 ```
 
+To try the UI without an identity provider:
+
+```
+mise exec -- go run ./cmd/edugit -dev-login -addr 127.0.0.1:8080 -admin-emails you@bth.se \
+  -staff-domain bth.se -student-domain student.bth.se
+```
+
+then open <http://127.0.0.1:8080/dev/login> and sign in as the admin email.
+
 Configuration via flags or environment (flags win):
 
 | Flag | Env | Default |
@@ -76,6 +85,7 @@ Configuration via flags or environment (flags win):
 | `-staff-domain` | `EDUGIT_STAFF_DOMAIN` | empty, e.g. `bth.se` |
 | `-student-domain` | `EDUGIT_STUDENT_DOMAIN` | empty, e.g. `student.bth.se` |
 | `-admin-emails` | `EDUGIT_ADMIN_EMAILS` | empty; comma-separated global admins |
+| `-dev-login` | | off; passwordless sign-in at `/dev/login`, only with a loopback `-addr` and no public URL |
 
 After signing in, create a personal access token at `/account/tokens`; it is shown once and stored only as a hash. Git will use it as the HTTP Basic password (the username is ignored).
 

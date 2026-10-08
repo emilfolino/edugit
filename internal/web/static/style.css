@@ -94,3 +94,14 @@ pre {
 .error {
   color: var(--accent);
 }
+
+/* courses and roster */
+.meta { color: color-mix(in srgb, var(--ink) 60%, transparent); font-family: var(--mono); font-size: .85em; }
+.courses { list-style: none; padding: 0; }
+.courses li { border-top: 1px solid var(--ink); padding: .75rem 0; display: flex; gap: 1rem; justify-content: space-between; flex-wrap: wrap; }
+.stack { display: grid; gap: .75rem; max-width: 32rem; }
+.stack label { display: grid; gap: .25rem; }
+form.inline { display: inline; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: .4rem .5rem; border-top: 1px solid var(--ink); vertical-align: middle; }
+.error { color: var(--accent); }

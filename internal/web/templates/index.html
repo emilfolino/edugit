@@ -1,4 +1,30 @@
 {{template "head" .}}
+    {{if .User}}
+    <h1>Courses</h1>
+    {{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
+    {{if .Courses}}
+    <ul class="courses">
+      {{range .Courses}}
+      <li><a href="/courses/{{.Slug}}">{{.Title}}</a>
+        <span class="meta">{{.Slug}}{{if .Term}} · {{.Term}}{{end}} · {{.Role}}{{if .Archived}} · archived{{end}}</span></li>
+      {{end}}
+    </ul>
+    {{else}}
+    <p>You are not enrolled in any course yet.</p>
+    {{end}}
+    {{if .User.IsAdmin}}
+    <h2>New course</h2>
+    <form method="post" action="/courses" class="stack">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <label>Short name <input name="slug" required pattern="[a-z0-9][a-z0-9\-]{1,39}"></label>
+      <label>Title <input name="title" required maxlength="120"></label>
+      <label>Term <input name="term" maxlength="40" placeholder="HT2026"></label>
+      <label>Course admin email <input name="admin" type="email" required></label>
+      <button>Create course</button>
+    </form>
+    {{end}}
+    {{else}}
     <h1>edugit</h1>
     <p>Git for teaching software engineering.</p>
+    {{end}}
 {{template "foot" .}}

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"os"
 	"strings"
 	"time"
@@ -33,6 +34,9 @@ type Config struct {
 	StaffDomain, StudentDomain string
 	// AdminEmails are emails promoted to global admin on login.
 	AdminEmails []string
+	// DevLogin enables a passwordless sign-in form for local development.
+	// It requires a loopback Addr and no PublicURL.
+	DevLogin bool
 }
 
 // Load parses args (without the program name) and env into a Config.
@@ -56,6 +60,7 @@ func Load(args []string, getenv func(string) string, errOut io.Writer) (Config, 
 	fs.StringVar(&c.StudentDomain, "student-domain", envOr(getenv, "EDUGIT_STUDENT_DOMAIN", ""), "student email domain (env EDUGIT_STUDENT_DOMAIN)")
 	admins := envOr(getenv, "EDUGIT_ADMIN_EMAILS", "")
 	fs.StringVar(&admins, "admin-emails", admins, "comma-separated global admin emails (env EDUGIT_ADMIN_EMAILS)")
+	fs.BoolVar(&c.DevLogin, "dev-login", false, "passwordless local sign-in for development; loopback only")
 	fs.DurationVar(&c.ShutdownTimeout, "shutdown-timeout", c.ShutdownTimeout, "graceful shutdown timeout")
 	if err := fs.Parse(args); err != nil {
 		return Config{}, err
@@ -68,6 +73,15 @@ func Load(args []string, getenv func(string) string, errOut io.Writer) (Config, 
 	}
 	if (c.PublicURL == "") != (c.IDPMetadata == "") {
 		return Config{}, fmt.Errorf("public-url and saml-idp-metadata must be set together")
+	}
+	if c.DevLogin {
+		host, _, err := net.SplitHostPort(c.Addr)
+		if err != nil || (host != "127.0.0.1" && host != "localhost" && host != "::1") {
+			return Config{}, fmt.Errorf("dev-login requires a loopback addr such as 127.0.0.1:8080")
+		}
+		if c.PublicURL != "" {
+			return Config{}, fmt.Errorf("dev-login cannot be combined with public-url")
+		}
 	}
 	if err := c.LogLevel.UnmarshalText([]byte(level)); err != nil {
 		return Config{}, fmt.Errorf("invalid log level %q: %w", level, err)

@@ -1,0 +1,81 @@
+{{template "head" .}}
+    <h1>{{.Course.Title}}</h1>
+    <p class="meta">{{.Course.Slug}}{{if .Course.Term}} · {{.Course.Term}}{{end}}{{if .Course.Archived}} · archived{{end}}</p>
+    {{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
+    {{if .Notice}}<p class="notice" role="status">{{.Notice}}</p>{{end}}
+    {{if .Skipped}}<ul class="skipped">{{range .Skipped}}<li>{{.}}</li>{{end}}</ul>{{end}}
+    {{if .CanManage}}
+    <form method="post" action="/courses/{{.Course.Slug}}/archive">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <input type="hidden" name="archived" value="{{if .Course.Archived}}0{{else}}1{{end}}">
+      <button>{{if .Course.Archived}}Restore course{{else}}Archive course{{end}}</button>
+    </form>
+    {{end}}
+    {{if .CanRoster}}
+    <h2>Roster</h2>
+    <table>
+      <thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead>
+      <tbody>
+      {{range .Roster}}
+      <tr>
+        <td>{{if .Pending}}<em>not signed in yet</em>{{else}}{{.DisplayName}}{{end}}</td>
+        <td>{{.Email}}</td>
+        <td>{{.Role}}</td>
+        <td>
+          {{if not $.Course.Archived}}
+          <form method="post" action="/courses/{{$.Course.Slug}}/role" class="inline">
+            <input type="hidden" name="csrf" value="{{$.CSRF}}">
+            <input type="hidden" name="email" value="{{.Email}}">
+            <select name="role" aria-label="Role for {{.Email}}">
+              <option value="student"{{if eq .Role "student"}} selected{{end}}>student</option>
+              {{if $.CanManage}}
+              <option value="teacher"{{if eq .Role "teacher"}} selected{{end}}>teacher</option>
+              <option value="course_admin"{{if eq .Role "course_admin"}} selected{{end}}>course_admin</option>
+              {{end}}
+            </select>
+            <button>set</button>
+          </form>
+          <form method="post" action="/courses/{{$.Course.Slug}}/remove" class="inline">
+            <input type="hidden" name="csrf" value="{{$.CSRF}}">
+            <input type="hidden" name="email" value="{{.Email}}">
+            <button>remove</button>
+          </form>
+          {{end}}
+        </td>
+      </tr>
+      {{end}}
+      </tbody>
+    </table>
+    {{if not .Course.Archived}}
+    <h2>Enrol</h2>
+    <form method="post" action="/courses/{{.Course.Slug}}/enroll" class="stack">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <label>Emails, one per line (CSV with an optional role column works)
+        <textarea name="emails" rows="6" required></textarea></label>
+      <label>Default role
+        <select name="role">
+          <option value="student">student</option>
+          {{if .CanManage}}<option value="teacher">teacher</option><option value="course_admin">course_admin</option>{{end}}
+        </select></label>
+      <button>Enrol</button>
+    </form>
+    <h2>Invite link</h2>
+    {{if .Link}}
+    <p>Share this link with students. It is shown only once:</p>
+    <p><code>{{.Link}}</code></p>
+    {{else if not .InviteExpires.IsZero}}
+    <p>A link is active until {{.InviteExpires.Format "2006-01-02"}}.</p>
+    {{end}}
+    <form method="post" action="/courses/{{.Course.Slug}}/invite" class="inline">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <button>{{if .InviteExpires.IsZero}}Create link{{else}}Replace link{{end}}</button>
+    </form>
+    {{if not .InviteExpires.IsZero}}
+    <form method="post" action="/courses/{{.Course.Slug}}/invite/revoke" class="inline">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <button>Revoke</button>
+    </form>
+    {{end}}
+    {{end}}
+    {{end}}
+{{template "foot" .}}

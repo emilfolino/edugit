@@ -266,3 +266,17 @@ func (s *Store) JoinByInvite(ctx context.Context, tokenHash string, userID int64
 	}
 	return c, nil
 }
+
+// UserByEmail returns the user with that email (case-insensitive) or
+// ErrNotFound.
+func (s *Store) UserByEmail(ctx context.Context, email string) (User, error) {
+	var u User
+	err := s.db.QueryRowContext(ctx, `
+		SELECT id, saml_subject, username, email, display_name, is_admin FROM users WHERE lower(email) = ?`,
+		strings.ToLower(strings.TrimSpace(email))).
+		Scan(&u.ID, &u.Subject, &u.Username, &u.Email, &u.DisplayName, &u.IsAdmin)
+	if errors.Is(err, sql.ErrNoRows) {
+		return User{}, ErrNotFound
+	}
+	return u, err
+}

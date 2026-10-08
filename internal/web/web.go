@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/emilfolino/edugit/internal/auth"
+	"github.com/emilfolino/edugit/internal/authz"
 	"github.com/emilfolino/edugit/internal/store"
 )
 
@@ -37,6 +38,14 @@ type TokenStore interface {
 type Options struct {
 	Sessions *auth.Sessions
 	Tokens   TokenStore
+	// Courses and Authz enable the course pages; both are required together
+	// with Sessions.
+	Courses CourseStore
+	Authz   *authz.Authorizer
+	// Domains gates which addresses may hold staff roles.
+	Domains auth.Domains
+	// PublicURL prefixes absolute links such as course invites.
+	PublicURL string
 	// LoginURL is the sign-in entry point, empty when SSO is not configured.
 	LoginURL string
 }
@@ -69,6 +78,9 @@ func (s *Server) Handler() http.Handler {
 		mux.HandleFunc("POST /account/tokens", s.createToken)
 		mux.HandleFunc("POST /account/tokens/{id}/revoke", s.revokeToken)
 		mux.HandleFunc("POST /logout", s.logout)
+		if s.opts.Courses != nil {
+			s.routeCourses(mux)
+		}
 	}
 	return mux
 }
@@ -82,6 +94,17 @@ type page struct {
 	Tokens   []store.Token
 	Secret   string
 	Error    string
+
+	Notice  string
+	Skipped []string
+	// Link is a freshly created invite link, or the invite token on the join page.
+	Link          string
+	Courses       []store.CourseRole
+	Course        store.Course
+	Roster        []store.Member
+	CanManage     bool
+	CanRoster     bool
+	InviteExpires time.Time
 }
 
 func (s *Server) newPage(r *http.Request, title string) page {
@@ -104,12 +127,20 @@ func (s *Server) render(w http.ResponseWriter, name string, p page, status int) 
 	}
 }
 
+func itoa(n int) string { return strconv.Itoa(n) }
+
 func (s *Server) healthz(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	_, _ = w.Write([]byte("ok\n"))
 }
 
 func (s *Server) index(w http.ResponseWriter, r *http.Request) {
+	if s.opts.Courses != nil {
+		if u, ok := s.opts.Sessions.User(r); ok {
+			s.dashboard(w, r, u)
+			return
+		}
+	}
 	s.render(w, "index.html", s.newPage(r, "edugit"), http.StatusOK)
 }
 

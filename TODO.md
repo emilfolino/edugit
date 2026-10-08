@@ -27,7 +27,7 @@ Numbered backlog for edugit. Reference items by number. Mark done with `[x]`.
 
 ## Courses & repos
 
-9. [ ] **Course management.** Create/archive courses, semesters/terms, enrollment (SAML-driven, CSV import, invite link), roster view, role assignment by course admin.
+9. [x] **Course management.** *(done: admin-only creation naming the course admin, archive, pre-enrolment by email bound at first login, paste/CSV import, invite link (hashed, one live per course, confirm-to-join), roster with role changes; staff roles need course admin plus an eligible domain. Audit entries come with #8; `-dev-login` added for local use.)* Create/archive courses, semesters/terms, enrollment (SAML-driven, CSV import, invite link), roster view, role assignment by course admin.
 10. [ ] **Teacher repos and templates.** Multiple teacher repos per course (material, starter code, solutions hidden from students). Mark repos as templates; visibility rules.
 11. [ ] **Assignments.** Define assignment from a template repo, deadlines, individual vs team mode. Generate per-student repo on accept (fresh history or copy), naming scheme, teacher access, bulk generation, late/extension handling. Team mode: shared repo per group, group creation/joining, membership rules.
 12. [ ] **Student repo lifecycle.** Default branch protection (no direct push to `main`, PR required), archive/lock at deadline, teacher feedback branch/PR, repo reset/recreate.

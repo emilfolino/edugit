@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/emilfolino/edugit/internal/auth"
+	"github.com/emilfolino/edugit/internal/authz"
 	"github.com/emilfolino/edugit/internal/config"
 	"github.com/emilfolino/edugit/internal/hooks"
 	"github.com/emilfolino/edugit/internal/store"
@@ -56,9 +57,21 @@ func run() error {
 
 	opts := web.Options{}
 	var sessions *auth.Sessions
-	if cfg.PublicURL != "" {
+	if cfg.PublicURL != "" || cfg.DevLogin {
 		sessions = &auth.Sessions{Backend: db, Secure: strings.HasPrefix(cfg.PublicURL, "https://")}
-		opts = web.Options{Sessions: sessions, Tokens: db, LoginURL: "/saml/login"}
+		loginURL := "/saml/login"
+		if cfg.DevLogin {
+			loginURL = "/dev/login"
+		}
+		opts = web.Options{
+			Sessions:  sessions,
+			Tokens:    db,
+			Courses:   db,
+			Authz:     &authz.Authorizer{Source: db},
+			Domains:   auth.Domains{Staff: cfg.StaffDomain, Student: cfg.StudentDomain},
+			PublicURL: strings.TrimSuffix(cfg.PublicURL, "/"),
+			LoginURL:  loginURL,
+		}
 		go purgeSessions(ctx, db, log)
 	}
 	ui, err := web.New(log, opts)
@@ -68,6 +81,10 @@ func run() error {
 
 	root := http.NewServeMux()
 	root.Handle("/", ui.Handler())
+	if cfg.DevLogin {
+		log.Warn("dev-login enabled: anyone who can reach this address can sign in as any user")
+		root.Handle("/dev/login", devLogin(db, sessions, cfg.AdminEmails, log))
+	}
 	if cfg.PublicURL != "" {
 		sp, err := newSAML(ctx, cfg, db, sessions, log)
 		if err != nil {
