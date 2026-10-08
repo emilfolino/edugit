@@ -24,7 +24,7 @@ func TestCourses(t *testing.T) {
 	defer db.Close()
 	sess := &auth.Sessions{Backend: db}
 	srv, err := New(slog.New(slog.NewTextHandler(io.Discard, nil)), Options{
-		Sessions: sess, Tokens: db, Courses: db, Authz: &authz.Authorizer{Source: db},
+		Sessions: sess, Tokens: db, Courses: db, Audit: db, Authz: &authz.Authorizer{Source: db},
 		Domains: auth.Domains{Staff: "bth.se", Student: "student.bth.se"}, PublicURL: "https://x.test", LoginURL: "/saml/login",
 	})
 	if err != nil {
@@ -126,5 +126,22 @@ func TestCourses(t *testing.T) {
 	}
 	if w := teacher("POST", "/courses/oop/enroll", url.Values{"emails": {"q@student.bth.se"}}); w.Code != http.StatusBadRequest {
 		t.Fatalf("archived enroll: %d", w.Code)
+	}
+
+	// Everything above must be in the audit log, visible only to admins.
+	if w := teacher("GET", "/admin/audit", nil); w.Code != http.StatusNotFound {
+		t.Fatalf("teacher audit view: %d", w.Code)
+	}
+	w = admin("GET", "/admin/audit", nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("admin audit view: %d", w.Code)
+	}
+	for _, want := range []string{"course.create", "roster.enroll", "invite.create", "invite.join", "roster.remove", "course.archive"} {
+		if !strings.Contains(w.Body.String(), want) {
+			t.Errorf("audit page missing %q", want)
+		}
+	}
+	if strings.Contains(w.Body.String(), token) {
+		t.Error("audit page leaks the invite token")
 	}
 }

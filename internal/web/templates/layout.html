@@ -12,6 +12,7 @@
     {{if .User}}
     <span class="who">{{.User.Username}}</span>
     <a href="/account/tokens">tokens</a>
+    {{if .User.IsAdmin}}<a href="/admin/audit">audit</a>{{end}}
     <form method="post" action="/logout">
       <input type="hidden" name="csrf" value="{{.CSRF}}">
       <button>sign out</button>

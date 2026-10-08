@@ -33,6 +33,9 @@ func devLogin(db *store.Store, sessions *auth.Sessions, admins []string, log *sl
 		}
 		u, err := db.LoginUser(r.Context(), "dev:"+email, email, email, slices.Contains(admins, email))
 		if err == nil {
+			err = db.Audit(r.Context(), u.ID, "auth.login", u.Username, "dev-login")
+		}
+		if err == nil {
 			err = sessions.Start(w, r, u.ID)
 		}
 		if err != nil {

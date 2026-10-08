@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/mail"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -183,7 +184,7 @@ func (s *Server) createCourse(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, "enroll course admin", err)
 		return
 	}
-	s.log.Info("course created", "course", slug, "by", u.Username)
+	s.audit(r, u, "course.create", slug, "course admin "+admin)
 	http.Redirect(w, r, "/courses/"+slug, http.StatusSeeOther)
 }
 
@@ -213,7 +214,7 @@ func (s *Server) archiveCourse(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, "archive course", err)
 		return
 	}
-	s.log.Info("course archived", "course", c.Slug, "archived", archived, "by", u.Username)
+	s.audit(r, u, "course.archive", c.Slug, "archived="+strconv.FormatBool(archived))
 	http.Redirect(w, r, "/courses/"+c.Slug, http.StatusSeeOther)
 }
 
@@ -315,7 +316,7 @@ func (s *Server) enroll(w http.ResponseWriter, r *http.Request) {
 		}
 		done++
 	}
-	s.log.Info("enrolled", "course", c.Slug, "count", done, "skipped", len(skipped), "by", u.Username)
+	s.audit(r, u, "roster.enroll", c.Slug, "enrolled="+itoa(done)+" skipped="+itoa(len(skipped)))
 	p.Notice = "Enrolled " + itoa(done) + "."
 	p.Skipped = skipped
 	s.renderCourse(w, r, u, c, pr, p, http.StatusOK)
@@ -393,7 +394,7 @@ func (s *Server) setRole(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, "set role", err)
 		return
 	}
-	s.log.Info("role changed", "course", c.Slug, "member", m.Email, "role", role, "by", u.Username)
+	s.audit(r, u, "roster.role", c.Slug, m.Email+" -> "+role)
 	http.Redirect(w, r, "/courses/"+c.Slug, http.StatusSeeOther)
 }
 
@@ -412,7 +413,7 @@ func (s *Server) removeMember(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, "remove member", err)
 		return
 	}
-	s.log.Info("member removed", "course", c.Slug, "member", m.Email, "by", u.Username)
+	s.audit(r, u, "roster.remove", c.Slug, m.Email)
 	http.Redirect(w, r, "/courses/"+c.Slug, http.StatusSeeOther)
 }
 
@@ -437,7 +438,7 @@ func (s *Server) createInvite(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, "create invite", err)
 		return
 	}
-	s.log.Info("invite created", "course", c.Slug, "by", u.Username)
+	s.audit(r, u, "invite.create", c.Slug, "")
 	p := s.newPage(r, c.Title)
 	p.Link = s.opts.PublicURL + "/join/" + secret
 	s.renderCourse(w, r, u, c, pr, p, http.StatusOK)
@@ -456,6 +457,7 @@ func (s *Server) revokeInvite(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, "revoke invite", err)
 		return
 	}
+	s.audit(r, u, "invite.revoke", c.Slug, "")
 	http.Redirect(w, r, "/courses/"+c.Slug, http.StatusSeeOther)
 }
 
@@ -492,7 +494,7 @@ func (s *Server) join(w http.ResponseWriter, r *http.Request) {
 	case err != nil:
 		s.fail(w, "join", err)
 	default:
-		s.log.Info("joined by invite", "course", c.Slug, "user", u.Username)
+		s.audit(r, u, "invite.join", c.Slug, "")
 		http.Redirect(w, r, "/courses/"+c.Slug, http.StatusSeeOther)
 	}
 }

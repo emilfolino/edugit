@@ -1,0 +1,24 @@
+{{template "head" .}}
+    <h1>Audit log</h1>
+    <form method="get" class="inline">
+      <label>Action <input name="action" value="{{.Filter}}" placeholder="e.g. roster.role"></label>
+      <button>filter</button>
+    </form>
+    <table>
+      <thead><tr><th>Time (UTC)</th><th>Actor</th><th>Action</th><th>Target</th><th>Detail</th></tr></thead>
+      <tbody>
+      {{range .Entries}}
+        <tr>
+          <td>{{.At.Format "2006-01-02 15:04:05"}}</td>
+          <td>{{if .Actor}}{{.Actor}}{{else}}-{{end}}</td>
+          <td>{{.Action}}</td>
+          <td>{{.Target}}</td>
+          <td>{{.Detail}}</td>
+        </tr>
+      {{else}}
+        <tr><td colspan="5">No entries.</td></tr>
+      {{end}}
+      </tbody>
+    </table>
+    {{if .Next}}<p><a href="/admin/audit?before={{.Next}}{{if .Filter}}&amp;action={{.Filter}}{{end}}">older</a></p>{{end}}
+{{template "foot" .}}

@@ -42,6 +42,9 @@ type Options struct {
 	// with Sessions.
 	Courses CourseStore
 	Authz   *authz.Authorizer
+	// Audit receives security-relevant events and serves the admin viewer;
+	// nil disables both.
+	Audit Auditor
 	// Domains gates which addresses may hold staff roles.
 	Domains auth.Domains
 	// PublicURL prefixes absolute links such as course invites.
@@ -81,6 +84,9 @@ func (s *Server) Handler() http.Handler {
 		if s.opts.Courses != nil {
 			s.routeCourses(mux)
 		}
+		if s.opts.Audit != nil && s.opts.Authz != nil {
+			mux.HandleFunc("GET /admin/audit", s.auditLog)
+		}
 	}
 	return mux
 }
@@ -105,6 +111,10 @@ type page struct {
 	CanManage     bool
 	CanRoster     bool
 	InviteExpires time.Time
+	CanAudit      bool
+	Entries       []store.AuditEntry
+	Next          int64
+	Filter        string
 }
 
 func (s *Server) newPage(r *http.Request, title string) page {
@@ -219,7 +229,7 @@ func (s *Server) createToken(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-	s.log.Info("token created", "user", u.Username, "name", name)
+	s.audit(r, u, "token.create", u.Username, name)
 	s.renderTokens(w, r, u, secret, "", http.StatusOK)
 }
 
@@ -240,15 +250,17 @@ func (s *Server) revokeToken(w http.ResponseWriter, r *http.Request) {
 		s.log.Error("revoke token", "err", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 	default:
-		s.log.Info("token revoked", "user", u.Username, "id", id)
+		s.audit(r, u, "token.revoke", u.Username, "id="+itoa(int(id)))
 		http.Redirect(w, r, "/account/tokens", http.StatusSeeOther)
 	}
 }
 
 func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
-	if _, ok := s.requirePost(w, r); !ok {
+	u, ok := s.requirePost(w, r)
+	if !ok {
 		return
 	}
+	s.audit(r, u, "auth.logout", u.Username, "")
 	if err := s.opts.Sessions.End(w, r); err != nil {
 		s.log.Error("end session", "err", err)
 	}

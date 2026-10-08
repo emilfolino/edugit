@@ -23,6 +23,10 @@ func TestCan(t *testing.T) {
 		{"admin creates course", admin, CourseCreate, Resource{}, true},
 		{"course admin cannot create course", roles(RoleCourseAdmin), CourseCreate, Resource{}, false},
 		{"teacher cannot create course", roles(RoleTeacher), CourseCreate, Resource{}, false},
+		{"admin views audit", admin, AuditView, Resource{}, true},
+		{"course admin cannot view audit", roles(RoleCourseAdmin), AuditView, Resource{}, false},
+		{"teacher cannot view audit", roles(RoleTeacher), AuditView, Resource{}, false},
+		{"student cannot view audit", roles(RoleStudent), AuditView, Resource{}, false},
 
 		{"admin views any course", admin, CourseView, courseRes, true},
 		{"student views own course", roles(RoleStudent), CourseView, courseRes, true},

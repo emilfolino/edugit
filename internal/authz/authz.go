@@ -38,6 +38,7 @@ type Action string
 // Actions. Course actions apply to a course resource, repo actions to a repo.
 const (
 	CourseCreate Action = "course.create" // global admin only
+	AuditView    Action = "audit.view"    // global admin only
 	CourseView   Action = "course.view"
 	CourseManage Action = "course.manage" // settings, roster, roles
 	RosterView   Action = "roster.view"   // staff
@@ -90,7 +91,7 @@ type Resource struct {
 //   - Archived repos are read-only for everyone, global admin included.
 //   - Staff manage repo settings in their course; students never do.
 func Can(p Principal, a Action, res Resource) bool {
-	if a == CourseCreate {
+	if a == CourseCreate || a == AuditView {
 		return p.IsAdmin
 	}
 	if a == RepoWrite && res.Archived {
