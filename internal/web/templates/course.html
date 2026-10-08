@@ -10,6 +10,17 @@
       <input type="hidden" name="archived" value="{{if .Course.Archived}}0{{else}}1{{end}}">
       <button>{{if .Course.Archived}}Restore course{{else}}Archive course{{end}}</button>
     </form>
+    <form method="post" action="/courses/{{.Course.Slug}}/commit-methods">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <label>Students commit with
+        <select name="methods">
+          <option value="both"{{if or (eq .Course.CommitMethods "both") (eq .Course.CommitMethods "")}} selected{{end}}>git CLI or browser editor</option>
+          <option value="cli"{{if eq .Course.CommitMethods "cli"}} selected{{end}}>git CLI only</option>
+          <option value="editor"{{if eq .Course.CommitMethods "editor"}} selected{{end}}>browser editor only</option>
+        </select>
+      </label>
+      <button>Save</button>
+    </form>
     {{end}}
     {{if or .Repos .CanCreateRepo}}
     <h2>Repositories</h2>

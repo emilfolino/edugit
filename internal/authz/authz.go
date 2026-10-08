@@ -46,7 +46,12 @@ const (
 	RepoCreate   Action = "repo.create"
 	RepoRead     Action = "repo.read" // clone, fetch, browse
 	RepoWrite    Action = "repo.write"
-	RepoAdmin    Action = "repo.admin" // settings, protection, delete
+	// RepoPush and RepoEdit are RepoWrite through one commit method: git
+	// push over HTTP, or the in-browser editor. Students are held to the
+	// course's CommitMethods; staff and global admins use either.
+	RepoPush  Action = "repo.push"
+	RepoEdit  Action = "repo.edit"
+	RepoAdmin Action = "repo.admin" // settings, protection, delete
 	// RepoReview covers commenting on and approving pull requests. Unlike
 	// RepoWrite it is open to requested reviewers and survives archiving.
 	RepoReview Action = "repo.review"
@@ -91,6 +96,21 @@ type Resource struct {
 	// request of the repo (peer review). It grants read access to the pull
 	// request pages and RepoReview, nothing else, and only to enrolled users.
 	IsReviewer bool
+	// CommitMethods is the course setting: "cli", "editor" or "both". Empty
+	// means both.
+	CommitMethods string
+}
+
+// Commit methods a course can enable for students.
+const (
+	MethodsBoth   = "both"
+	MethodsCLI    = "cli"
+	MethodsEditor = "editor"
+)
+
+// ValidMethods reports whether m is a storable course setting.
+func ValidMethods(m string) bool {
+	return m == MethodsBoth || m == MethodsCLI || m == MethodsEditor
 }
 
 // Can reports whether p may perform a on res. It denies by default.
@@ -106,6 +126,19 @@ type Resource struct {
 func Can(p Principal, a Action, res Resource) bool {
 	if a == CourseCreate || a == AuditView {
 		return p.IsAdmin
+	}
+	if a == RepoPush || a == RepoEdit {
+		if !Can(p, RepoWrite, res) {
+			return false
+		}
+		if p.IsAdmin || p.Roles[res.CourseID] >= RoleTeacher {
+			return true
+		}
+		m := res.CommitMethods
+		if m == "" || m == MethodsBoth {
+			return true
+		}
+		return (a == RepoPush) == (m == MethodsCLI)
 	}
 	if a == AssignmentAccept {
 		return p.Roles[res.CourseID] == RoleStudent

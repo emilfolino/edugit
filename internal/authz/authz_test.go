@@ -111,6 +111,43 @@ func TestCan(t *testing.T) {
 	}
 }
 
+func TestCommitMethods(t *testing.T) {
+	const course = 1
+	member := Resource{CourseID: course, Repo: true, Kind: KindStudent, IsMember: true}
+	with := func(r Resource, m string) Resource { r.CommitMethods = m; return r }
+	arch := member
+	arch.Archived = true
+	student, teacher := Principal{Roles: map[int64]Role{course: RoleStudent}}, Principal{Roles: map[int64]Role{course: RoleTeacher}}
+	tests := []struct {
+		name string
+		p    Principal
+		a    Action
+		res  Resource
+		want bool
+	}{
+		{"default allows push", student, RepoPush, member, true},
+		{"default allows edit", student, RepoEdit, member, true},
+		{"both allows push", student, RepoPush, with(member, MethodsBoth), true},
+		{"cli denies edit", student, RepoEdit, with(member, MethodsCLI), false},
+		{"cli allows push", student, RepoPush, with(member, MethodsCLI), true},
+		{"editor denies push", student, RepoPush, with(member, MethodsEditor), false},
+		{"editor allows edit", student, RepoEdit, with(member, MethodsEditor), true},
+		{"unknown value denies both", student, RepoPush, with(member, "x"), false},
+		{"teacher exempt from editor-only", teacher, RepoPush, with(member, MethodsEditor), true},
+		{"teacher exempt from cli-only", teacher, RepoEdit, with(member, MethodsCLI), true},
+		{"admin exempt", Principal{IsAdmin: true}, RepoPush, with(member, MethodsEditor), true},
+		{"archived denies", student, RepoEdit, arch, false},
+		{"non-member denies", student, RepoEdit, Resource{CourseID: course, Repo: true, Kind: KindStudent}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Can(tt.p, tt.a, tt.res); got != tt.want {
+				t.Errorf("Can(%s) = %v, want %v", tt.a, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestParseRole(t *testing.T) {
 	for in, want := range map[string]Role{"student": RoleStudent, "teacher": RoleTeacher, "course_admin": RoleCourseAdmin, "": RoleNone, "root": RoleNone} {
 		if got := ParseRole(in); got != want {

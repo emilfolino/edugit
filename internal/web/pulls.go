@@ -118,6 +118,7 @@ func (s *Server) loadPullRepo(w http.ResponseWriter, r *http.Request, u store.Us
 		return pullCtx{}, false
 	}
 	res := repoResource(store.RepoEntry{Repo: rec, Member: member})
+	res.CommitMethods = c.CommitMethods
 	if res.IsReviewer, err = s.opts.Pulls.IsRequestedReviewer(r.Context(), rec.ID, u.ID); err != nil {
 		s.fail(w, "load reviewer", err)
 		return pullCtx{}, false

@@ -61,11 +61,12 @@ func (z *Authorizer) Git(r *http.Request, course, repo string, write bool) error
 	res := Resource{
 		CourseID: rec.CourseID, Repo: true, Kind: RepoKind(rec.Kind),
 		IsTemplate: rec.IsTemplate, Archived: rec.Archived, IsMember: member,
+		CommitMethods: rec.CommitMethods,
 	}
 	if !Can(p, RepoRead, res) {
 		return gitserver.ErrNotFound
 	}
-	if write && !Can(p, RepoWrite, res) {
+	if write && !Can(p, RepoPush, res) {
 		return gitserver.ErrForbidden
 	}
 	return nil

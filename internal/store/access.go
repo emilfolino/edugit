@@ -64,6 +64,8 @@ type Repo struct {
 	Kind       string
 	IsTemplate bool
 	Archived   bool
+	// CommitMethods is the course's setting, filled by RepoByName.
+	CommitMethods string
 }
 
 // CreateRepo inserts repository metadata. It does not touch the disk.
@@ -90,11 +92,11 @@ func (s *Store) AddRepoMember(ctx context.Context, repoID, userID int64) error {
 // does not exist.
 func (s *Store) RepoByName(ctx context.Context, courseSlug, name string, userID int64) (r Repo, member bool, err error) {
 	err = s.db.QueryRowContext(ctx, `
-		SELECT r.id, r.course_id, r.name, r.kind, r.is_template, r.archived,
+		SELECT r.id, r.course_id, r.name, r.kind, r.is_template, r.archived, c.commit_methods,
 		       EXISTS (SELECT 1 FROM repo_members m WHERE m.repo_id = r.id AND m.user_id = ?)
 		FROM repos r JOIN courses c ON c.id = r.course_id
 		WHERE c.slug = ? AND r.name = ?`, userID, courseSlug, name).
-		Scan(&r.ID, &r.CourseID, &r.Name, &r.Kind, &r.IsTemplate, &r.Archived, &member)
+		Scan(&r.ID, &r.CourseID, &r.Name, &r.Kind, &r.IsTemplate, &r.Archived, &r.CommitMethods, &member)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Repo{}, false, ErrNotFound
 	}

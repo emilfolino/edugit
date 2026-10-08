@@ -28,6 +28,7 @@ type CourseStore interface {
 	CreateCourse(ctx context.Context, slug, title, term string) (store.Course, error)
 	CourseBySlug(ctx context.Context, slug string) (store.Course, error)
 	SetArchived(ctx context.Context, courseID int64, archived bool) error
+	SetCommitMethods(ctx context.Context, courseID int64, methods string) error
 	UserCourses(ctx context.Context, userID int64) ([]store.CourseRole, error)
 	AllCourses(ctx context.Context) ([]store.CourseRole, error)
 	Roster(ctx context.Context, courseID int64) ([]store.Member, error)
@@ -46,6 +47,7 @@ func (s *Server) routeCourses(mux *http.ServeMux) {
 	mux.HandleFunc("POST /courses", s.createCourse)
 	mux.HandleFunc("GET /courses/{slug}", s.coursePage)
 	mux.HandleFunc("POST /courses/{slug}/archive", s.archiveCourse)
+	mux.HandleFunc("POST /courses/{slug}/commit-methods", s.setCommitMethods)
 	mux.HandleFunc("POST /courses/{slug}/enroll", s.enroll)
 	mux.HandleFunc("POST /courses/{slug}/role", s.setRole)
 	mux.HandleFunc("POST /courses/{slug}/remove", s.removeMember)
@@ -263,6 +265,30 @@ func (s *Server) archiveCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.audit(r, u, "course.archive", c.Slug, "archived="+strconv.FormatBool(archived))
+	http.Redirect(w, r, "/courses/"+c.Slug, http.StatusSeeOther)
+}
+
+// setCommitMethods lets the course admin choose how students commit. It is
+// enforced by authz (RepoPush, RepoEdit), not by the UI.
+func (s *Server) setCommitMethods(w http.ResponseWriter, r *http.Request) {
+	u, ok := s.requirePost(w, r)
+	if !ok {
+		return
+	}
+	c, _, ok := s.loadCourse(w, r, u, authz.CourseManage)
+	if !ok {
+		return
+	}
+	m := r.PostFormValue("methods")
+	if !authz.ValidMethods(m) {
+		http.Error(w, "unknown commit method", http.StatusBadRequest)
+		return
+	}
+	if err := s.opts.Courses.SetCommitMethods(r.Context(), c.ID, m); err != nil {
+		s.fail(w, "set commit methods", err)
+		return
+	}
+	s.audit(r, u, "course.commit_methods", c.Slug, "methods="+m)
 	http.Redirect(w, r, "/courses/"+c.Slug, http.StatusSeeOther)
 }
 

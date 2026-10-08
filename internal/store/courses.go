@@ -16,6 +16,8 @@ type Course struct {
 	Title    string
 	Term     string
 	Archived bool
+	// CommitMethods is "cli", "editor" or "both": how students may commit.
+	CommitMethods string
 }
 
 // CreateCourse inserts a course.
@@ -33,8 +35,8 @@ func (s *Store) CreateCourse(ctx context.Context, slug, title, term string) (Cou
 func (s *Store) CourseBySlug(ctx context.Context, slug string) (Course, error) {
 	var c Course
 	err := s.db.QueryRowContext(ctx,
-		`SELECT id, slug, title, term, archived FROM courses WHERE slug = ?`, slug).
-		Scan(&c.ID, &c.Slug, &c.Title, &c.Term, &c.Archived)
+		`SELECT id, slug, title, term, archived, commit_methods FROM courses WHERE slug = ?`, slug).
+		Scan(&c.ID, &c.Slug, &c.Title, &c.Term, &c.Archived, &c.CommitMethods)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Course{}, ErrNotFound
 	}
@@ -44,6 +46,18 @@ func (s *Store) CourseBySlug(ctx context.Context, slug string) (Course, error) {
 // SetArchived archives or restores a course.
 func (s *Store) SetArchived(ctx context.Context, courseID int64, archived bool) error {
 	res, err := s.db.ExecContext(ctx, `UPDATE courses SET archived = ? WHERE id = ?`, archived, courseID)
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// SetCommitMethods stores how students may commit: cli, editor or both.
+func (s *Store) SetCommitMethods(ctx context.Context, courseID int64, methods string) error {
+	res, err := s.db.ExecContext(ctx, `UPDATE courses SET commit_methods = ? WHERE id = ?`, methods, courseID)
 	if err != nil {
 		return err
 	}
