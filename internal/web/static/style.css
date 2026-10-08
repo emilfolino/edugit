@@ -131,7 +131,7 @@ textarea {
   color: inherit;
   background: var(--paper);
   border: 1px solid var(--ink);
-  border-radius: 0;
+  border-radius: 0.5rem;
   padding: 0.7rem 0.85rem;
 }
 
@@ -170,7 +170,7 @@ input[type="submit"] {
   color: #fff;
   background: var(--accent);
   border: 1px solid var(--accent);
-  border-radius: 0;
+  border-radius: 0.5rem;
   padding: 0.7rem 1.25rem;
   cursor: pointer;
 }
