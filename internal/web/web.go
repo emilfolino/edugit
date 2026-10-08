@@ -48,6 +48,9 @@ type Options struct {
 	Disk  RepoDisk
 	// Assignments enables assignments; it needs Repos and Disk.
 	Assignments AssignmentStore
+	// Pulls and PullGit enable pull requests; they need Repos.
+	Pulls   PullStore
+	PullGit PullGit
 	// Audit receives security-relevant events and serves the admin viewer;
 	// nil disables both.
 	Audit Auditor
@@ -126,6 +129,8 @@ type page struct {
 	Assignments   []store.Assignment
 	CanAssign     bool
 	Asg           *assignmentView
+	Pulls         *pullsView
+	Pull          *pullView
 }
 
 func (s *Server) newPage(r *http.Request, title string) page {

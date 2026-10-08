@@ -1,0 +1,70 @@
+{{template "head" .}}
+    {{with .Pull}}
+    {{$base := printf "/courses/%s/repos/%s/pulls/%d" $.Course.Slug .Repo .PR.Number}}
+    <h1>#{{.PR.Number}} {{.PR.Title}}</h1>
+    <p class="meta"><a href="/courses/{{$.Course.Slug}}/repos/{{.Repo}}/pulls">Pull requests</a> · {{.PR.State}} · {{.PR.Author}} · <code>{{.PR.Head}}</code> → <code>{{.PR.Base}}</code></p>
+    {{if $.Error}}<p class="error" role="alert">{{$.Error}}</p>{{end}}
+    {{if .PR.Body}}<p class="prbody">{{.PR.Body}}</p>{{end}}
+    {{if eq .PR.State "merged"}}<p class="notice">Merged as <code>{{.PR.MergeCommit}}</code>.</p>{{end}}
+    {{if eq .PR.State "open"}}
+    {{if .Gone}}<p class="error">A branch of this pull request no longer exists.</p>
+    {{else}}
+    <h2>Commits ({{len .Commits}})</h2>
+    <ul class="commits">{{range .Commits}}<li><code>{{printf "%.8s" .SHA}}</code> {{.Subject}} <span class="meta">{{.Author}}</span></li>{{end}}</ul>
+    {{if .Mergeable}}<p class="notice">No conflicts with the base branch.</p>{{else}}<p class="error">This branch conflicts with the base branch.</p>{{end}}
+    {{end}}
+    {{if .CanWrite}}
+    {{if and .Mergeable (not .Gone)}}
+    <form method="post" action="{{$base}}/merge">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <select name="strategy" aria-label="Merge strategy">
+        <option value="merge">Merge commit</option>
+        <option value="squash">Squash</option>
+        <option value="rebase">Rebase</option>
+      </select>
+      <button>Merge</button>
+    </form>
+    {{end}}
+    <form method="post" action="{{$base}}/close" class="inline">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <button>Close</button>
+    </form>
+    {{end}}
+    {{if not .Gone}}
+    <h2>Changes</h2>
+    <p class="meta">{{if .Split}}<a href="{{$base}}">Unified</a> · Split{{else}}Unified · <a href="{{$base}}?view=split">Split</a>{{end}}</p>
+    {{range .Files}}
+    <section class="diff-file">
+      <h3><code>{{.Path}}</code> <span class="meta">{{.Status}}{{if .Binary}} · binary{{else}} · +{{.Added}} −{{.Removed}}{{end}}</span></h3>
+      {{range .Hunks}}
+      <table class="diff {{if $.Pull.Split}}split{{end}}">
+        <tbody>
+        <tr class="hunk"><td colspan="4"><code>{{.Header}}</code></td></tr>
+        {{if $.Pull.Split}}
+        {{range .Rows}}
+        <tr>
+          {{with .Left}}<td class="ln">{{.Old}}</td><td class="{{.Class}}"><code>{{.Text}}</code></td>{{else}}<td></td><td></td>{{end}}
+          {{with .Right}}<td class="ln">{{.New}}</td><td class="{{.Class}}"><code>{{.Text}}</code></td>{{else}}<td></td><td></td>{{end}}
+        </tr>
+        {{end}}
+        {{else}}
+        {{range .Lines}}
+        <tr class="{{.Class}}"><td class="ln">{{if .Old}}{{.Old}}{{end}}</td><td class="ln">{{if .New}}{{.New}}{{end}}</td><td colspan="2"><code>{{.Text}}</code></td></tr>
+        {{end}}
+        {{end}}
+        </tbody>
+      </table>
+      {{end}}
+    </section>
+    {{end}}
+    {{end}}
+    {{else if eq .PR.State "closed"}}
+    {{if .CanWrite}}
+    <form method="post" action="{{$base}}/reopen">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <button>Reopen</button>
+    </form>
+    {{end}}
+    {{end}}
+    {{end}}
+{{template "foot"}}

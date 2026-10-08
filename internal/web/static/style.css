@@ -105,3 +105,13 @@ form.inline { display: inline; }
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: .4rem .5rem; border-top: 1px solid var(--ink); vertical-align: middle; }
 .error { color: var(--accent); }
+
+/* pull requests */
+.prbody { white-space: pre-wrap; }
+.commits { list-style: none; padding: 0; }
+table.diff { font-family: var(--mono); font-size: .85em; margin-bottom: 1rem; }
+table.diff td { padding: 0 .5rem; border-top: 0; white-space: pre-wrap; }
+table.diff .ln { width: 3rem; text-align: right; opacity: .6; }
+table.diff .add { background: color-mix(in srgb, #2a9d4a 20%, transparent); }
+table.diff .del { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+table.diff .hunk td { opacity: .7; }

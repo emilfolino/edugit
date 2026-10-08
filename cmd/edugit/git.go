@@ -69,7 +69,7 @@ func setupGit(ctx context.Context, repos *gitserver.Repos, db *store.Store, sess
 		return fmt.Errorf("hook socket dir: %w", err)
 	}
 	sock := filepath.Join(sockDir, "hook.sock")
-	bridge := &hooks.Bridge{Secret: secret, Policy: hooks.Protection{Source: ruleSource{db}}, Log: log}
+	bridge := &hooks.Bridge{Secret: secret, Policy: hooks.Protection{Source: ruleSource{db}}, Sink: pullSink{db}, Log: log}
 	go func() {
 		defer os.RemoveAll(sockDir)
 		if err := bridge.Serve(ctx, sock); err != nil && ctx.Err() == nil {

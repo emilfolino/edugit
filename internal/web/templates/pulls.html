@@ -1,0 +1,35 @@
+{{template "head" .}}
+    {{with .Pulls}}
+    <h1>Pull requests</h1>
+    <p class="meta"><a href="/courses/{{$.Course.Slug}}">{{$.Course.Title}}</a> · {{.Repo}}</p>
+    {{if $.Error}}<p class="error" role="alert">{{$.Error}}</p>{{end}}
+    {{if .Pulls}}
+    <table>
+      <thead><tr><th>#</th><th>Title</th><th>Branches</th><th>State</th></tr></thead>
+      <tbody>
+      {{range .Pulls}}
+      <tr><td>{{.Number}}</td><td><a href="/courses/{{$.Course.Slug}}/repos/{{$.Pulls.Repo}}/pulls/{{.Number}}">{{.Title}}</a></td><td><code>{{.Head}}</code> → <code>{{.Base}}</code></td><td>{{.State}}</td></tr>
+      {{end}}
+      </tbody>
+    </table>
+    {{else}}<p>No pull requests yet.</p>{{end}}
+    {{if .CanWrite}}
+    <h2>New pull request</h2>
+    <form method="post" class="stack" action="/courses/{{$.Course.Slug}}/repos/{{.Repo}}/pulls">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <label>Head branch <input name="head" required></label>
+      <label>Base branch <input name="base" value="main" required></label>
+      <label>Title <input name="title" maxlength="200" required></label>
+      <label>Description <textarea name="body" rows="4"></textarea></label>
+      <button>Open pull request</button>
+    </form>
+    {{end}}
+    {{if .CanFeedback}}
+    <h2>Feedback</h2>
+    <form method="post" action="/courses/{{$.Course.Slug}}/repos/{{.Repo}}/pulls/feedback">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <button>Open feedback pull request</button>
+    </form>
+    {{end}}
+    {{end}}
+{{template "foot"}}

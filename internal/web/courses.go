@@ -58,6 +58,9 @@ func (s *Server) routeCourses(mux *http.ServeMux) {
 	if s.opts.Repos != nil && s.opts.Disk != nil && s.opts.Assignments != nil {
 		s.routeAssignments(mux)
 	}
+	if s.opts.Repos != nil && s.opts.Pulls != nil && s.opts.PullGit != nil {
+		s.routePulls(mux)
+	}
 	mux.HandleFunc("GET /join/{token}", s.joinPage)
 	mux.HandleFunc("POST /join/{token}", s.join)
 }

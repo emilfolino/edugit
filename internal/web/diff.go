@@ -185,3 +185,14 @@ func pairRows(lines []diffLine) []splitRow {
 	}
 	return rows
 }
+
+// Class is the CSS class of the line.
+func (l diffLine) Class() string {
+	switch l.Kind {
+	case '+':
+		return "add"
+	case '-':
+		return "del"
+	}
+	return ""
+}
