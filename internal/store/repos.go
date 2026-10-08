@@ -59,13 +59,14 @@ type BranchRule struct {
 	RequirePR         bool
 	AllowForce        bool
 	RequiredApprovals int
+	RequireChecks     bool
 }
 
 // BranchRules returns the protection rules of the named repository, ordered
 // by pattern. An unknown repository has no rules.
 func (s *Store) BranchRules(ctx context.Context, courseSlug, name string) ([]BranchRule, error) {
 	return s.rules(ctx, `
-		SELECT b.pattern, b.require_pr, b.allow_force_push, b.required_approvals
+		SELECT b.pattern, b.require_pr, b.allow_force_push, b.required_approvals, b.require_checks
 		FROM branch_protections b
 		JOIN repos r ON r.id = b.repo_id JOIN courses c ON c.id = r.course_id
 		WHERE c.slug = ? AND r.name = ? ORDER BY b.pattern`, courseSlug, name)
@@ -73,7 +74,7 @@ func (s *Store) BranchRules(ctx context.Context, courseSlug, name string) ([]Bra
 
 func (s *Store) repoRules(ctx context.Context, repoID int64) ([]BranchRule, error) {
 	return s.rules(ctx, `
-		SELECT pattern, require_pr, allow_force_push, required_approvals
+		SELECT pattern, require_pr, allow_force_push, required_approvals, require_checks
 		FROM branch_protections WHERE repo_id = ? ORDER BY pattern`, repoID)
 }
 
@@ -86,7 +87,7 @@ func (s *Store) rules(ctx context.Context, q string, args ...any) ([]BranchRule,
 	var out []BranchRule
 	for rows.Next() {
 		var b BranchRule
-		if err := rows.Scan(&b.Pattern, &b.RequirePR, &b.AllowForce, &b.RequiredApprovals); err != nil {
+		if err := rows.Scan(&b.Pattern, &b.RequirePR, &b.AllowForce, &b.RequiredApprovals, &b.RequireChecks); err != nil {
 			return nil, err
 		}
 		out = append(out, b)

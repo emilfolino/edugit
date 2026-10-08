@@ -73,3 +73,40 @@ func TestRepos(t *testing.T) {
 		t.Errorf("deleted repo: got %v", err)
 	}
 }
+
+func TestMergeGate(t *testing.T) {
+	ctx := context.Background()
+	db, err := Open(ctx, ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	c, _ := db.CreateCourse(ctx, "oop", "OOP", "")
+	r, _ := db.CreateRepo(ctx, c.ID, "r", "teacher", false)
+
+	if need, _ := db.RequireChecks(ctx, r.ID, "main"); need {
+		t.Error("checks required by default")
+	}
+	if err := db.SetMergeGate(ctx, r.ID, "main", 2, true); err != nil {
+		t.Fatal(err)
+	}
+	if need, _ := db.RequireChecks(ctx, r.ID, "main"); !need {
+		t.Error("checks not required after SetMergeGate")
+	}
+	if need, _ := db.RequireChecks(ctx, r.ID, "dev"); need {
+		t.Error("rule leaked to another branch")
+	}
+	if n, _ := db.RequiredApprovals(ctx, r.ID, "main"); n != 2 {
+		t.Errorf("approvals = %d", n)
+	}
+	if err := db.SetMergeGate(ctx, r.ID, "main", 1, false); err != nil {
+		t.Fatal(err)
+	}
+	if need, _ := db.RequireChecks(ctx, r.ID, "main"); need {
+		t.Error("checks still required after turning off")
+	}
+	rules, _ := db.BranchRules(ctx, "oop", "r")
+	if len(rules) != 1 || rules[0].RequiredApprovals != 1 {
+		t.Errorf("rules = %+v", rules)
+	}
+}

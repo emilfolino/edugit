@@ -32,7 +32,7 @@ Pick a teacher repository, a branch and optionally a directory on the course pag
 
 ## Automatic checks (CI)
 
-If the administrator enabled it, add `.edugit/ci.json` to a repository to run jobs on each branch push in a container without network access. Results appear under Checks and on pull requests. Checks currently inform; they do not block merging.
+If the administrator enabled it, add `.edugit/ci.json` to a repository to run jobs on each branch push in a container without network access. Results appear under Checks and on pull requests. Under the pull-request list's protection form you can tick "Require passing CI checks" for a branch: merging is then refused unless every job passed on the latest commit (and refused when no job has run, so only enable it on repositories that define jobs).
 
 ## Exporting
 

@@ -262,3 +262,30 @@ func (s *Store) SetRequiredApprovals(ctx context.Context, repoID int64, pattern 
 		repoID, pattern, n)
 	return err
 }
+
+// RequireChecks reports whether a rule matching branch demands passing CI
+// checks before merging.
+func (s *Store) RequireChecks(ctx context.Context, repoID int64, branch string) (bool, error) {
+	rules, err := s.repoRules(ctx, repoID)
+	if err != nil {
+		return false, err
+	}
+	for _, r := range rules {
+		if ok, _ := path.Match(r.Pattern, branch); ok && r.RequireChecks {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// SetMergeGate sets (creating the rule if needed) both merge requirements for
+// branches matching pattern: the approvals and whether CI checks must pass.
+func (s *Store) SetMergeGate(ctx context.Context, repoID int64, pattern string, approvals int, checks bool) error {
+	_, err := s.db.ExecContext(ctx, `
+		INSERT INTO branch_protections (repo_id, pattern, require_pr, required_approvals, require_checks)
+		VALUES (?, ?, 1, ?, ?)
+		ON CONFLICT (repo_id, pattern) DO UPDATE SET
+			required_approvals = excluded.required_approvals, require_checks = excluded.require_checks`,
+		repoID, pattern, approvals, checks)
+	return err
+}

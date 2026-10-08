@@ -31,6 +31,8 @@ type PullStore interface {
 	IsRequestedReviewer(ctx context.Context, repoID, userID int64) (bool, error)
 	RequiredApprovals(ctx context.Context, repoID int64, branch string) (int, error)
 	SetRequiredApprovals(ctx context.Context, repoID int64, pattern string, n int) error
+	RequireChecks(ctx context.Context, repoID int64, branch string) (bool, error)
+	SetMergeGate(ctx context.Context, repoID int64, pattern string, approvals int, checks bool) error
 }
 
 // PullGit is the git access pull requests need. *gitserver.Repos implements
@@ -366,6 +368,10 @@ func (s *Server) pullMerge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if msg := s.approvalGate(r.Context(), pc, pull, hs); msg != "" {
+		s.renderPull(w, r, pc, pull, msg, http.StatusBadRequest)
+		return
+	}
+	if msg := s.checkGate(r.Context(), pc, pull, hs); msg != "" {
 		s.renderPull(w, r, pc, pull, msg, http.StatusBadRequest)
 		return
 	}

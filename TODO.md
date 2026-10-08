@@ -67,5 +67,5 @@ Numbered backlog for edugit. Reference items by number. Mark done with `[x]`.
 31. [x] **Test: editor-only courses reject CLI pushes.** Git smart-HTTP handler test with `commit_methods=editor` (students refused, staff exempt); extends #28.
 32. [x] **Store tests for sites.** `store/sites.go`: set, replace, clear, one site per course.
 33. [ ] **Rate limits on login and write endpoints.** Throttle `/saml/login`, `/dev/login`, and state-changing routes per user and address; optional per-user quotas. Extends #22.
-34. [ ] **CI results block merges.** Optional per-branch rule requiring passing checks on the head SHA before `pullMerge`; fail closed. Extends #20 and #17.
+34. [x] **CI results block merges.** *(done: `branch_protections.require_checks`, set with the approvals on the pull-request list page; `checkGate` in `pullMerge` needs every job's latest run on the head commit to be `success`, fails closed when there are none.)* Optional per-branch rule requiring passing checks on the head SHA before `pullMerge`; fail closed. Extends #20 and #17.
 35. [ ] **Clean up published site files on repo delete.** No user-facing repo deletion exists yet; when it does, also remove the build on disk (the `course_sites` row already cascades, see `TestSites`). Extends #19.

@@ -37,6 +37,7 @@
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
       <label>Branch pattern <input name="pattern" value="main" required></label>
       <label>Approvals needed to merge <input name="approvals" type="number" min="0" max="10" value="1" required></label>
+      <label><input name="checks" type="checkbox" value="1"> Require passing CI checks (the repository must define jobs)</label>
       <button>Save</button>
     </form>
     {{end}}

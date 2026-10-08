@@ -64,6 +64,55 @@ func (s *Server) approvalGate(ctx context.Context, pc pullCtx, pull store.PullRe
 	return ""
 }
 
+// checkGate returns a refusal message if the base branch requires passing CI
+// checks and the head commit lacks them. It fails closed: no runs at all
+// counts as not passing, so only enable the rule for repos with CI jobs.
+func (s *Server) checkGate(ctx context.Context, pc pullCtx, pull store.PullRequest, head string) string {
+	need, err := s.opts.Pulls.RequireChecks(ctx, pc.repo.ID, pull.Base)
+	if err != nil {
+		s.log.Error("require checks", "err", err)
+		return "Could not check the required checks."
+	}
+	if !need {
+		return ""
+	}
+	if s.opts.CI == nil {
+		return "Checks are required but CI is not enabled on this server."
+	}
+	runs, err := s.opts.CI.CIRunsForSHA(ctx, pc.repo.ID, head)
+	if err != nil {
+		s.log.Error("ci runs", "err", err)
+		return "Could not load the checks."
+	}
+	return checksVerdict(runs)
+}
+
+// checksVerdict is "" when every job's latest run succeeded. Runs are in id
+// order, so a later run of a job (a rerun) supersedes an earlier one.
+func checksVerdict(runs []store.CIRun) string {
+	latest := map[string]store.CIRun{}
+	for _, r := range runs {
+		latest[r.Job] = r
+	}
+	if len(latest) == 0 {
+		return "No checks have run on the latest commit."
+	}
+	pending := false
+	for job, r := range latest {
+		switch r.Status {
+		case "success":
+		case "queued", "running":
+			pending = true
+		default:
+			return "The check " + job + " did not pass."
+		}
+	}
+	if pending {
+		return "Checks are still running."
+	}
+	return ""
+}
+
 // loadOpenPull is the common start of the review handlers: an authenticated
 // POST on an open pull request where the user may do action.
 func (s *Server) loadOpenPull(w http.ResponseWriter, r *http.Request, action authz.Action) (pullCtx, store.PullRequest, bool) {
@@ -245,10 +294,11 @@ func (s *Server) setProtection(w http.ResponseWriter, r *http.Request) {
 		s.renderPulls(w, r, pc, "Give a branch pattern and 0 to 10 approvals.", http.StatusBadRequest)
 		return
 	}
-	if err := s.opts.Pulls.SetRequiredApprovals(r.Context(), pc.repo.ID, pattern, n); err != nil {
+	checks := r.PostFormValue("checks") == "1"
+	if err := s.opts.Pulls.SetMergeGate(r.Context(), pc.repo.ID, pattern, n, checks); err != nil {
 		s.fail(w, "set protection", err)
 		return
 	}
-	s.audit(r, u, "repo.protection", pc.c.Slug+"/"+pc.repo.Name, pattern+" approvals="+itoa(n))
+	s.audit(r, u, "repo.protection", pc.c.Slug+"/"+pc.repo.Name, pattern+" approvals="+itoa(n)+" checks="+strconv.FormatBool(checks))
 	http.Redirect(w, r, pc.base(), http.StatusSeeOther)
 }
