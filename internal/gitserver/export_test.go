@@ -64,3 +64,17 @@ func TestExtractTarSafety(t *testing.T) {
 		t.Error("traversal accepted")
 	}
 }
+
+func TestBundle(t *testing.T) {
+	r, _ := pullFixture(t)
+	var buf bytes.Buffer
+	if err := r.Bundle(context.Background(), "c1", "demo", &buf); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.HasPrefix(buf.Bytes(), []byte("# v2 git bundle")) {
+		t.Errorf("not a bundle: %.30q", buf.Bytes())
+	}
+	if err := r.Bundle(context.Background(), "c1", "../x", &buf); err == nil {
+		t.Error("bad name should fail")
+	}
+}

@@ -117,3 +117,22 @@ func (l *limitedBuf) Write(p []byte) (int, error) {
 }
 
 func (l *limitedBuf) String() string { return string(l.b) }
+
+// Bundle writes a git bundle of every ref of the repo to w. An empty repo has
+// nothing to bundle and yields an error.
+func (r *Repos) Bundle(ctx context.Context, course, name string, w io.Writer) error {
+	repo, err := r.Path(course, name)
+	if err != nil {
+		return err
+	}
+	cmd := exec.CommandContext(ctx, "git", "bundle", "create", "-", "--all")
+	cmd.Dir = repo
+	cmd.Env = gitEnv()
+	cmd.Stdout = w
+	var stderr limitedBuf
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("git bundle: %w: %s", err, stderr.String())
+	}
+	return nil
+}

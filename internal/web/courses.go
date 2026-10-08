@@ -61,6 +61,9 @@ func (s *Server) routeCourses(mux *http.ServeMux) {
 		s.routeAssignments(mux)
 		if s.opts.Grades != nil {
 			s.routeGrading(mux)
+			if s.opts.Bundler != nil {
+				s.routeExport(mux)
+			}
 		}
 	}
 	if s.opts.Repos != nil && s.opts.Pulls != nil && s.opts.PullGit != nil {

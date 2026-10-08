@@ -52,6 +52,8 @@ type Options struct {
 	Assignments AssignmentStore
 	// Grades enables rubrics and grading; it needs Assignments.
 	Grades GradeStore
+	// Bundler enables the course export; it needs Grades.
+	Bundler Bundler
 	// Pulls and PullGit enable pull requests; they need Repos.
 	Pulls   PullStore
 	PullGit PullGit
