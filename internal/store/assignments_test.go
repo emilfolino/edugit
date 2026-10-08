@@ -167,3 +167,89 @@ func TestAssignments(t *testing.T) {
 		}
 	})
 }
+
+func TestSyncLocks(t *testing.T) {
+	ctx := context.Background()
+	db, err := Open(ctx, ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	c, _ := db.CreateCourse(ctx, "oop", "OOP", "")
+	tmpl, _ := db.CreateRepo(ctx, c.ID, "starter", "teacher", true)
+	u, _ := db.LoginUser(ctx, "a@student.bth.se", "a@student.bth.se", "a", false)
+	if err := db.SetMembership(ctx, c.ID, u.ID, "student", "manual"); err != nil {
+		t.Fatal(err)
+	}
+	dl := time.Date(2026, 11, 1, 12, 0, 0, 0, time.UTC)
+	mk := func(slug string, deadline time.Time) (Assignment, Repo) {
+		a, err := db.CreateAssignment(ctx, Assignment{CourseID: c.ID, TemplateRepoID: tmpl.ID, Slug: slug, Title: slug,
+			Mode: "individual", History: "fresh", TeamSize: 3, Deadline: deadline})
+		if err != nil {
+			t.Fatal(err)
+		}
+		r, err := db.CreateAssignmentRepo(ctx, a, slug+"-a", u.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return a, r
+	}
+	archived := func(a Assignment) bool {
+		rs, err := db.AssignmentRepos(ctx, a.ID)
+		if err != nil || len(rs) != 1 {
+			t.Fatalf("AssignmentRepos = %+v, %v", rs, err)
+		}
+		return rs[0].Archived
+	}
+	timed, _ := mk("timed", dl)
+	open, _ := mk("open", time.Time{})
+
+	if l, _, err := db.SyncLocks(ctx, dl.Add(-time.Hour)); err != nil || l != 0 || archived(timed) {
+		t.Fatalf("before deadline: locked=%d err=%v archived=%v", l, err, archived(timed))
+	}
+	if l, _, err := db.SyncLocks(ctx, dl.Add(time.Minute)); err != nil || l != 1 || !archived(timed) {
+		t.Fatalf("after deadline: locked=%d err=%v archived=%v", l, err, archived(timed))
+	}
+	if archived(open) {
+		t.Error("assignment without a deadline was locked")
+	}
+	if l, _, _ := db.SyncLocks(ctx, dl.Add(2*time.Minute)); l != 0 {
+		t.Errorf("second sync locked %d repos", l)
+	}
+	if err := db.SetExtension(ctx, timed.ID, u.ID, dl.Add(48*time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	if _, re, err := db.SyncLocks(ctx, dl.Add(time.Hour)); err != nil || re != 1 || archived(timed) {
+		t.Fatalf("after extension: reopened=%d err=%v archived=%v", re, err, archived(timed))
+	}
+	if l, _, _ := db.SyncLocks(ctx, dl.Add(72*time.Hour)); l != 1 || !archived(timed) {
+		t.Errorf("extended deadline did not lock (locked=%d)", l)
+	}
+}
+
+func TestDefaultProtection(t *testing.T) {
+	ctx := context.Background()
+	db, err := Open(ctx, ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	c, _ := db.CreateCourse(ctx, "oop", "OOP", "")
+	tmpl, _ := db.CreateRepo(ctx, c.ID, "starter", "teacher", true)
+	u, _ := db.LoginUser(ctx, "a@student.bth.se", "a@student.bth.se", "a", false)
+	_ = db.SetMembership(ctx, c.ID, u.ID, "student", "manual")
+	a, _ := db.CreateAssignment(ctx, Assignment{CourseID: c.ID, TemplateRepoID: tmpl.ID, Slug: "l", Title: "l",
+		Mode: "individual", History: "fresh", TeamSize: 3})
+	if _, err := db.CreateAssignmentRepo(ctx, a, "l-a", u.ID); err != nil {
+		t.Fatal(err)
+	}
+	rules, err := db.BranchRules(ctx, "oop", "l-a")
+	if err != nil || len(rules) != len(ProtectedBranches) {
+		t.Fatalf("BranchRules = %+v, %v", rules, err)
+	}
+	for _, r := range rules {
+		if !r.RequirePR || r.AllowForce {
+			t.Errorf("rule %+v is not PR-only without force", r)
+		}
+	}
+}

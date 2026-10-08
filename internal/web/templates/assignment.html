@@ -9,7 +9,7 @@
     {{if not .Deadline.IsZero}}<p>Your deadline: {{.Effective.Format "2006-01-02 15:04"}} UTC{{if not .Open}} (closed){{end}}</p>{{end}}
     {{if .Own}}
     <h2>Your repository</h2>
-    <p>{{.Own.Name}}{{if .Own.Archived}} <span class="meta">archived</span>{{end}}</p>
+    <p>{{.Own.Name}}{{if .Own.Archived}} <span class="meta">locked: the deadline has passed</span>{{end}}</p>
     <p><code>git clone {{.Own.CloneURL}}</code></p>
     {{else if eq .Mode "individual"}}
     {{if .Open}}
@@ -66,8 +66,16 @@
     <h2>Repositories</h2>
     {{if .Repos}}
     <table>
-      <thead><tr><th>Repository</th><th>Owner</th></tr></thead>
-      <tbody>{{range .Repos}}<tr><td>{{.Name}}{{if .Archived}} <span class="meta">archived</span>{{end}}</td><td>{{.Owner}}</td></tr>{{end}}</tbody>
+      <thead><tr><th>Repository</th><th>Owner</th><th></th></tr></thead>
+      <tbody>{{range .Repos}}<tr><td>{{.Name}}{{if .Archived}} <span class="meta">locked</span>{{end}}</td><td>{{.Owner}}</td>
+        <td>
+          <form method="post" action="/courses/{{$.Course.Slug}}/assignments/{{$.Asg.Slug}}/reset" class="inline">
+            <input type="hidden" name="csrf" value="{{$.CSRF}}">
+            <input type="hidden" name="repo" value="{{.Name}}">
+            <input name="confirm" placeholder="type name to reset" aria-label="Confirm reset of {{.Name}}" size="24">
+            <button>Reset</button>
+          </form>
+        </td></tr>{{end}}</tbody>
     </table>
     {{else}}<p>No repositories yet.</p>{{end}}
     {{if eq .Mode "individual"}}

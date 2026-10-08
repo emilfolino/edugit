@@ -28,6 +28,12 @@ type RepoDisk interface {
 	// Generate creates name from the template repo's content, with fresh
 	// (single-commit) or copied history.
 	Generate(ctx context.Context, course, template, name string, fresh bool) error
+	// Branch creates branch at the tip of from; DefaultBranch names HEAD.
+	Branch(ctx context.Context, course, name, branch, from string) error
+	DefaultBranch(ctx context.Context, course, name string) (string, error)
+	// Replace swaps name for what create builds, keeping the old repo if
+	// create fails.
+	Replace(ctx context.Context, course, name string, create func(context.Context) error) error
 }
 
 // repoView is a repository as shown on the course page.

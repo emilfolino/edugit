@@ -20,6 +20,9 @@ import (
 type fakeDisk struct {
 	fail    bool
 	created []string
+	// branches and replaced record Branch and Replace calls.
+	branches []string
+	replaced int
 }
 
 func (d *fakeDisk) Create(_ context.Context, course, name, _ string) error {
@@ -34,6 +37,18 @@ func (d *fakeDisk) Delete(string, string) error { return nil }
 
 func (d *fakeDisk) Generate(_ context.Context, course, _, name string, _ bool) error {
 	return d.Create(context.Background(), course, name, "")
+}
+
+func (d *fakeDisk) Branch(_ context.Context, course, name, branch, _ string) error {
+	d.branches = append(d.branches, course+"/"+name+":"+branch)
+	return nil
+}
+
+func (d *fakeDisk) DefaultBranch(context.Context, string, string) (string, error) { return "main", nil }
+
+func (d *fakeDisk) Replace(ctx context.Context, _, _ string, create func(context.Context) error) error {
+	d.replaced++
+	return create(ctx)
 }
 
 func TestRepos(t *testing.T) {

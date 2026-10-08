@@ -191,6 +191,55 @@ func (r *Repos) Generate(ctx context.Context, course, template, name string, fre
 	return nil
 }
 
+// Branch creates branch in the repository at the tip of from, with plumbing
+// so hooks and branch protection are not involved. It fails if the branch
+// exists.
+func (r *Repos) Branch(ctx context.Context, course, name, branch, from string) error {
+	dir, err := r.Path(course, name)
+	if err != nil {
+		return err
+	}
+	if !validBranch(branch) || !validBranch(from) {
+		return fmt.Errorf("%w: branch", ErrInvalidName)
+	}
+	// An empty old value makes update-ref refuse to overwrite.
+	if out, err := runGit(ctx, dir, "update-ref", "refs/heads/"+branch, "refs/heads/"+from+"^{commit}", ""); err != nil {
+		return fmt.Errorf("create branch %q: %w: %s", branch, err, out)
+	}
+	return nil
+}
+
+// DefaultBranch returns the branch HEAD points at.
+func (r *Repos) DefaultBranch(ctx context.Context, course, name string) (string, error) {
+	dir, err := r.Path(course, name)
+	if err != nil {
+		return "", err
+	}
+	out, err := runGit(ctx, dir, "symbolic-ref", "--short", "HEAD")
+	if err != nil {
+		return "", fmt.Errorf("default branch: %w: %s", err, out)
+	}
+	return out, nil
+}
+
+// Replace swaps the repository for a freshly built one. It moves the
+// existing repo aside, calls create to build the replacement under the same
+// name, and then discards the old one; if create fails the old repo is put
+// back.
+func (r *Repos) Replace(ctx context.Context, course, name string, create func(context.Context) error) error {
+	aside := name + "-replaced"
+	if err := r.Rename(course, name, aside); err != nil {
+		return fmt.Errorf("move repo aside: %w", err)
+	}
+	if err := create(ctx); err != nil {
+		if rerr := r.Rename(course, aside, name); rerr != nil {
+			return fmt.Errorf("%w (and restoring the old repo failed: %v)", err, rerr)
+		}
+		return err
+	}
+	return r.Delete(course, aside)
+}
+
 // Delete removes a repository.
 func (r *Repos) Delete(course, name string) error {
 	p, err := r.Path(course, name)

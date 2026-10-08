@@ -188,7 +188,84 @@ func insertAssignmentRepo(ctx context.Context, tx *sql.Tx, a Assignment, name, k
 		a.ID, r.ID, userID, teamID); err != nil {
 		return Repo{}, err
 	}
+	// Students work through pull requests; feedback is reviewed the same way.
+	for _, pattern := range ProtectedBranches {
+		if _, err := tx.ExecContext(ctx,
+			`INSERT INTO branch_protections (repo_id, pattern, require_pr) VALUES (?, ?, 1)`, r.ID, pattern); err != nil {
+			return Repo{}, err
+		}
+	}
 	return r, nil
+}
+
+// ProtectedBranches are the branches of a generated repo that only pull
+// requests may change.
+var ProtectedBranches = []string{"main", FeedbackBranch}
+
+// FeedbackBranch is the branch created at the starting commit of a generated
+// repo; the teacher's feedback pull request targets it.
+const FeedbackBranch = "feedback"
+
+// deadlinePassed matches generated repos (ar, a) whose effective deadline,
+// the assignment's or a later one from an extension of the owner or a team
+// mate, is not after ?1.
+const deadlinePassed = `a.deadline IS NOT NULL AND a.deadline <= ?1 AND NOT EXISTS (
+	SELECT 1 FROM assignment_extensions e WHERE e.assignment_id = a.id AND e.deadline > ?1 AND
+	(e.user_id = ar.user_id OR e.user_id IN (SELECT tm.user_id FROM team_members tm WHERE tm.team_id = ar.team_id)))`
+
+// SyncLocks archives generated repos whose deadline has passed and reopens
+// those it archived earlier whose deadline an extension has since moved past
+// now. It returns the number of repos locked and reopened.
+func (s *Store) SyncLocks(ctx context.Context, now time.Time) (locked, reopened int, err error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer tx.Rollback()
+	at := formatTime(now)
+	const from = ` FROM assignment_repos ar JOIN assignments a ON a.id = ar.assignment_id WHERE `
+	ids := func(where string) ([]int64, error) {
+		rows, err := tx.QueryContext(ctx, `SELECT ar.repo_id`+from+where, at)
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+		var out []int64
+		for rows.Next() {
+			var id int64
+			if err := rows.Scan(&id); err != nil {
+				return nil, err
+			}
+			out = append(out, id)
+		}
+		return out, rows.Err()
+	}
+	set := func(ids []int64, archived bool, lockedAt any) error {
+		for _, id := range ids {
+			if _, err := tx.ExecContext(ctx, `UPDATE repos SET archived = ? WHERE id = ?`, archived, id); err != nil {
+				return err
+			}
+			if _, err := tx.ExecContext(ctx, `UPDATE assignment_repos SET locked_at = ? WHERE repo_id = ?`, lockedAt, id); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	reopen, err := ids(`ar.locked_at IS NOT NULL AND NOT (` + deadlinePassed + `)`)
+	if err != nil {
+		return 0, 0, fmt.Errorf("find repos to reopen: %w", err)
+	}
+	if err := set(reopen, false, nil); err != nil {
+		return 0, 0, err
+	}
+	lock, err := ids(`ar.locked_at IS NULL AND ` + deadlinePassed)
+	if err != nil {
+		return 0, 0, fmt.Errorf("find repos to lock: %w", err)
+	}
+	if err := set(lock, true, at); err != nil {
+		return 0, 0, err
+	}
+	return len(lock), len(reopen), tx.Commit()
 }
 
 // CreateTeam creates a team and its shared repo with userID as first member.

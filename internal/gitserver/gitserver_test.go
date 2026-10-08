@@ -336,3 +336,50 @@ func TestRepos_Generate(t *testing.T) {
 		t.Error("failed duplicate generation removed the existing repo")
 	}
 }
+
+func TestRepos_BranchAndReplace(t *testing.T) {
+	ctx := context.Background()
+	r := newRepos(t)
+	if err := r.Create(ctx, "c1", "demo", "main"); err != nil {
+		t.Fatal(err)
+	}
+	work := t.TempDir()
+	git(t, work, "init", "--quiet", "-b", "main")
+	git(t, work, "commit", "--allow-empty", "-m", "one")
+	p, _ := r.Path("c1", "demo")
+	git(t, p, "fetch", "--quiet", work, "+refs/heads/main:refs/heads/main")
+
+	if got, err := r.DefaultBranch(ctx, "c1", "demo"); err != nil || got != "main" {
+		t.Errorf("DefaultBranch = %q, %v", got, err)
+	}
+	if err := r.Branch(ctx, "c1", "demo", "feedback", "main"); err != nil {
+		t.Fatal(err)
+	}
+	if a, b := git(t, p, "rev-parse", "main"), git(t, p, "rev-parse", "feedback"); a != b {
+		t.Errorf("feedback at %s, want %s", b, a)
+	}
+	if err := r.Branch(ctx, "c1", "demo", "feedback", "main"); err == nil {
+		t.Error("Branch overwrote an existing branch")
+	}
+	if err := r.Branch(ctx, "c1", "demo", "bad name", "main"); err == nil {
+		t.Error("Branch accepted an invalid name")
+	}
+
+	boom := errors.New("boom")
+	if err := r.Replace(ctx, "c1", "demo", func(context.Context) error { return boom }); !errors.Is(err, boom) {
+		t.Errorf("failed Replace error = %v", err)
+	}
+	if got := git(t, p, "branch", "--list", "feedback"); got == "" {
+		t.Error("failed Replace did not restore the old repo")
+	}
+	err := r.Replace(ctx, "c1", "demo", func(ctx context.Context) error { return r.Create(ctx, "c1", "demo", "main") })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := git(t, p, "branch", "--list", "feedback"); got != "" {
+		t.Errorf("Replace kept old branches: %q", got)
+	}
+	if ok, _ := r.Exists("c1", "demo-replaced"); ok {
+		t.Error("Replace left the aside copy behind")
+	}
+}

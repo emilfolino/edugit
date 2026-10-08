@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -96,8 +97,26 @@ func TestAssignments(t *testing.T) {
 	if !strings.Contains(strings.Join(disk.created, ","), "oop/lab1-a") {
 		t.Fatalf("disk: %v", disk.created)
 	}
+	if !slices.Contains(disk.branches, "oop/lab1-a:feedback") {
+		t.Fatalf("feedback branch not created: %v", disk.branches)
+	}
 	if w := a("/courses/oop/assignments/lab1/accept", url.Values{}); w.Code != http.StatusBadRequest {
 		t.Fatalf("accept twice: got %d, want 400", w.Code)
+	}
+	reset := url.Values{"repo": {"lab1-a"}, "confirm": {"wrong"}}
+	if w := a("/courses/oop/assignments/lab1/reset", reset); w.Code != http.StatusForbidden {
+		t.Fatalf("student reset: got %d, want 403", w.Code)
+	}
+	if w := teacher("/courses/oop/assignments/lab1/reset", reset); w.Code != http.StatusBadRequest || disk.replaced != 0 {
+		t.Fatalf("unconfirmed reset: got %d, replaced %d", w.Code, disk.replaced)
+	}
+	reset.Set("confirm", "lab1-a")
+	if w := teacher("/courses/oop/assignments/lab1/reset", reset); w.Code != http.StatusSeeOther || disk.replaced != 1 {
+		t.Fatalf("reset: got %d, replaced %d: %s", w.Code, disk.replaced, w.Body)
+	}
+	reset.Set("repo", "nope")
+	if w := teacher("/courses/oop/assignments/lab1/reset", reset); w.Code != http.StatusNotFound {
+		t.Fatalf("reset unknown repo: got %d, want 404", w.Code)
 	}
 	if w := teacher("/courses/oop/assignments/lab1/accept", url.Values{}); w.Code != http.StatusForbidden {
 		t.Fatalf("teacher accept: got %d, want 403", w.Code)

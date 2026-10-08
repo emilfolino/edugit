@@ -84,6 +84,7 @@ func run() error {
 			LoginURL:    loginURL,
 		}
 		go purgeSessions(ctx, db, log)
+		go syncLocks(ctx, db, log)
 	}
 	ui, err := web.New(log, opts)
 	if err != nil {
@@ -191,6 +192,27 @@ func purgeSessions(ctx context.Context, db *store.Store, log *slog.Logger) {
 			if err := db.PurgeSessions(ctx, time.Now()); err != nil {
 				log.Error("purge sessions", "err", err)
 			}
+		}
+	}
+}
+
+// syncLocks applies assignment deadlines to student repos every minute until
+// ctx is done.
+func syncLocks(ctx context.Context, db *store.Store, log *slog.Logger) {
+	t := time.NewTicker(time.Minute)
+	defer t.Stop()
+	for {
+		locked, reopened, err := db.SyncLocks(ctx, time.Now())
+		switch {
+		case err != nil:
+			log.Error("sync locks", "err", err)
+		case locked+reopened > 0:
+			log.Info("sync locks", "locked", locked, "reopened", reopened)
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
 		}
 	}
 }

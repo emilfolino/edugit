@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -28,6 +29,7 @@ type AssignmentStore interface {
 	AssignmentBySlug(ctx context.Context, courseID int64, slug string) (store.Assignment, error)
 	AssignmentRepoFor(ctx context.Context, assignmentID, userID int64) (store.Repo, error)
 	AssignmentRepos(ctx context.Context, assignmentID int64) ([]store.AssignedRepo, error)
+	SyncLocks(ctx context.Context, now time.Time) (locked, reopened int, err error)
 	CreateAssignmentRepo(ctx context.Context, a store.Assignment, name string, userID int64) (store.Repo, error)
 	CreateTeam(ctx context.Context, a store.Assignment, teamName, repoName string, userID int64) (store.Team, error)
 	DeleteTeam(ctx context.Context, teamID int64) error
@@ -59,6 +61,7 @@ func (s *Server) routeAssignments(mux *http.ServeMux) {
 	mux.HandleFunc("POST /courses/{slug}/assignments/{a}/accept", s.acceptAssignment)
 	mux.HandleFunc("POST /courses/{slug}/assignments/{a}/generate", s.generateAssignment)
 	mux.HandleFunc("POST /courses/{slug}/assignments/{a}/extend", s.extendAssignment)
+	mux.HandleFunc("POST /courses/{slug}/assignments/{a}/reset", s.resetRepo)
 	mux.HandleFunc("POST /courses/{slug}/assignments/{a}/teams", s.createTeam)
 	mux.HandleFunc("POST /courses/{slug}/assignments/{a}/teams/{id}/join", s.joinTeam)
 	mux.HandleFunc("POST /courses/{slug}/assignments/{a}/teams/leave", s.leaveTeam)
@@ -237,7 +240,20 @@ func (s *Server) reject(w http.ResponseWriter, r *http.Request, u store.User, c 
 // generateRepo creates the disk repo for rec from the assignment template,
 // reporting whether it succeeded; the caller undoes the metadata on failure.
 func (s *Server) generateRepo(ctx context.Context, c store.Course, a store.Assignment, name string) error {
-	return s.opts.Disk.Generate(ctx, c.Slug, a.TemplateName, name, a.History == "fresh")
+	if err := s.opts.Disk.Generate(ctx, c.Slug, a.TemplateName, name, a.History == "fresh"); err != nil {
+		return err
+	}
+	head, err := s.opts.Disk.DefaultBranch(ctx, c.Slug, name)
+	if err == nil {
+		err = s.opts.Disk.Branch(ctx, c.Slug, name, store.FeedbackBranch, head)
+	}
+	if err != nil {
+		if derr := s.opts.Disk.Delete(c.Slug, name); derr != nil {
+			s.log.Error("remove repo without feedback branch", "course", c.Slug, "repo", name, "err", derr)
+		}
+		return err
+	}
+	return nil
 }
 
 // provision makes the metadata row and the disk repo for one student's
@@ -364,6 +380,11 @@ func (s *Server) extendAssignment(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := s.opts.Assignments.SetExtension(r.Context(), a.ID, target.ID, until); err != nil {
 		s.fail(w, "set extension", err)
+		return
+	}
+	// An extension may reopen a repo the deadline lock has archived.
+	if _, _, err := s.opts.Assignments.SyncLocks(r.Context(), time.Now()); err != nil {
+		s.fail(w, "sync locks", err)
 		return
 	}
 	s.audit(r, u, "assignment.extend", c.Slug+"/"+a.Slug, target.Username+" until "+until.Format(deadlineLayout))
@@ -503,5 +524,45 @@ func (s *Server) leaveTeam(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.audit(r, u, "team.leave", c.Slug+"/"+a.Slug, "")
+	http.Redirect(w, r, "/courses/"+c.Slug+"/assignments/"+a.Slug, http.StatusSeeOther)
+}
+
+// resetRepo rebuilds a student's repo from the template, discarding its
+// history. The form must repeat the repo name as confirmation.
+func (s *Server) resetRepo(w http.ResponseWriter, r *http.Request) {
+	u, ok := s.requirePost(w, r)
+	if !ok {
+		return
+	}
+	c, pr, ok := s.loadCourse(w, r, u, authz.AssignmentManage)
+	if !ok {
+		return
+	}
+	a, ok := s.loadAssignment(w, r, c)
+	if !ok {
+		return
+	}
+	name := r.PostFormValue("repo")
+	repos, err := s.opts.Assignments.AssignmentRepos(r.Context(), a.ID)
+	if err != nil {
+		s.fail(w, "assignment repos", err)
+		return
+	}
+	if !slices.ContainsFunc(repos, func(ar store.AssignedRepo) bool { return ar.Name == name }) {
+		http.NotFound(w, r)
+		return
+	}
+	if c.Archived || r.PostFormValue("confirm") != name {
+		s.reject(w, r, u, c, pr, a, "Type the repository name to confirm the reset.")
+		return
+	}
+	err = s.opts.Disk.Replace(r.Context(), c.Slug, name, func(ctx context.Context) error {
+		return s.generateRepo(ctx, c, a, name)
+	})
+	if err != nil {
+		s.fail(w, "reset repo", err)
+		return
+	}
+	s.audit(r, u, "assignment.reset", c.Slug+"/"+name, "")
 	http.Redirect(w, r, "/courses/"+c.Slug+"/assignments/"+a.Slug, http.StatusSeeOther)
 }
