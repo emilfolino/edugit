@@ -4,7 +4,7 @@ A self-hosted Git platform built for software engineering education.
 
 edugit lets teachers run courses where students work the way professionals do: branch, open a pull request, get a review, merge. It is intended as a replacement for GitHub Campus/Enterprise, designed around courses, assignments and teaching from the start rather than adapted to them.
 
-> **Status: early development.** The project scaffold runs (config, HTTP server, embedded UI shell, health endpoint) the SQLite metadata store with its initial schema is in place, and the Git smart-HTTP layer (clone, fetch, push, repo lifecycle, GC) and the git hooks bridge (branch protection, push events) are implemented as libraries, pending auth before they are mounted. Auth and courses are not implemented yet. Design decisions are settled and the work is tracked in [`TODO.md`](TODO.md).
+> **Status: early development.** The project scaffold runs (config, HTTP server, embedded UI shell, health endpoint) the SQLite metadata store with its initial schema is in place, and the Git smart-HTTP layer (clone, fetch, push, repo lifecycle, GC) and the git hooks bridge (branch protection, push events) are implemented as libraries, pending sessions before they are mounted. SAML sign-in (Microsoft Entra ID) works up to identifying the user; sessions, authorization and courses are not implemented yet. Design decisions are settled and the work is tracked in [`TODO.md`](TODO.md).
 
 ## Goals
 
@@ -46,6 +46,7 @@ Student code execution (CI and autograding) is a separate, sandboxed component a
 - `internal/store`: SQLite store (pure-Go driver) with embedded forward-only migrations
 - `internal/gitserver`: bare-repo management and Git smart-HTTP handler (shells out to `git`)
 - `internal/hooks`: pre-/post-receive hooks calling back into the server (branch protection, push events)
+- `internal/auth`: SAML 2.0 service provider (crewjam/saml), identity claims and email-domain eligibility
 - `internal/web`: HTTP handlers, templates and static assets (embedded)
 - [`TODO.md`](TODO.md): numbered implementation backlog and open questions
 - [`STYLE.md`](STYLE.md): code style, based on the official Go guidance
@@ -69,6 +70,13 @@ Configuration via flags or environment (flags win):
 | `-addr` | `EDUGIT_ADDR` | `:8080` |
 | `-data-dir` | `EDUGIT_DATA_DIR` | `./data` |
 | `-log-level` | `EDUGIT_LOG_LEVEL` | `info` |
+| `-public-url` | `EDUGIT_PUBLIC_URL` | empty (SAML disabled) |
+| `-saml-idp-metadata` | `EDUGIT_SAML_IDP_METADATA` | empty; https URL or file |
+| `-staff-domain` | `EDUGIT_STAFF_DOMAIN` | empty, e.g. `bth.se` |
+| `-student-domain` | `EDUGIT_STUDENT_DOMAIN` | empty, e.g. `student.bth.se` |
+| `-admin-emails` | `EDUGIT_ADMIN_EMAILS` | empty; comma-separated global admins |
+
+SAML is enabled when `-public-url` and `-saml-idp-metadata` are both set. Register `<public-url>/saml/metadata` (entity ID) and `<public-url>/saml/acs` with the identity provider; the service provider keypair is generated in the data directory on first start. When a domain is set, other email domains are refused. Domains only gate eligibility; they never grant a role.
 
 ## Backup and restore
 

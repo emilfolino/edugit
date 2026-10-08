@@ -3,6 +3,7 @@ package config
 import (
 	"io"
 	"log/slog"
+	"slices"
 	"testing"
 )
 
@@ -38,5 +39,25 @@ func TestLoad(t *testing.T) {
 				t.Errorf("LogLevel: got %v, want %v", got.LogLevel, tt.level)
 			}
 		})
+	}
+}
+
+func TestLoad_saml(t *testing.T) {
+	env := map[string]string{
+		"EDUGIT_PUBLIC_URL":        "https://git.example.edu",
+		"EDUGIT_SAML_IDP_METADATA": "https://idp.example/metadata",
+		"EDUGIT_ADMIN_EMAILS":      " EFO@bth.se, ,b@bth.se",
+	}
+	got, err := Load(nil, func(k string) string { return env[k] }, io.Discard)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"efo@bth.se", "b@bth.se"}; !slices.Equal(got.AdminEmails, want) {
+		t.Errorf("AdminEmails: got %q, want %q", got.AdminEmails, want)
+	}
+
+	delete(env, "EDUGIT_SAML_IDP_METADATA")
+	if _, err := Load(nil, func(k string) string { return env[k] }, io.Discard); err == nil {
+		t.Error("public url without idp metadata: got nil error, want error")
 	}
 }

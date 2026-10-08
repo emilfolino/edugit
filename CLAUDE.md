@@ -39,16 +39,17 @@ make run                         # go run ./cmd/edugit
 go test ./internal/web -run TestHandler   # single test
 ```
 
-Config: flags or env (`-addr`/`EDUGIT_ADDR`, `-data-dir`/`EDUGIT_DATA_DIR`, `-log-level`/`EDUGIT_LOG_LEVEL`); flags win.
+Config: flags or env (`-addr`/`EDUGIT_ADDR`, `-data-dir`/`EDUGIT_DATA_DIR`, `-log-level`/`EDUGIT_LOG_LEVEL`, plus the SAML settings listed in README.md); flags win.
 
 ## Store notes
 
 Migrations live in `internal/store/migrations/NNNN_name.sql`, are embedded, forward-only, and each runs in a transaction; add new files, never edit applied ones. Pragmas (foreign keys, WAL, busy timeout) are set per connection in the DSN. Tests use `:memory:` (single connection) or `t.TempDir()`.
 
-## Architecture (planned; `config`, `web`, `store`, `gitserver` and `hooks` exist so far)
+## Architecture (planned; `config`, `web`, `store`, `gitserver`, `hooks` and `auth` exist so far)
 
 - `internal/gitserver`: bare repos at `<root>/<course>/<name>.git`; `Repos.Path` is the only name-to-path resolver (strict name regex). `Handler` serves smart-HTTP at `/git/{course}/{repo}.git/...` via `git upload-pack|receive-pack --stateless-rpc`, with authorization injected as an `Authorizer` func (wired to real auth in #6/#7; not yet mounted in `cmd/edugit`). Git subprocesses use a scrubbed env (`gitEnv`). Tests use real `git` through `httptest`.
 - `internal/hooks`: pre-/post-receive bridge. Repos get tiny shell hooks that exec `edugit hook <name>` (`hooks.Run`), which computes force-push status inside git's quarantine and calls the server over a 0600 unix socket (`Bridge`, bearer secret from a per-process random). Socket, secret and pusher identity reach hooks via env set by `gitserver.Handler.HookEnv`. `Policy` (branch protection in `Protection`, fed by a `RuleSource`) gates pre-receive and fails closed; `Sink` receives post-receive pushes (PR engine #16, publisher #19). The merge engine updates refs server-side and so bypasses hooks. Not yet mounted in `cmd/edugit`; the `RuleSource` store adapter lands with #10/#12. Tests re-exec the test binary as `edugit` via `TestMain`.
+- `internal/auth`: SAML SP on crewjam/saml (the one justified non-stdlib auth dependency). SP-initiated only: `/saml/login` stores the request ID (single use, 10 min, in memory) and sets a binding cookie; `/saml/acs` requires both before `ParseResponse`. Users are keyed on the Entra `objectidentifier` claim; `Domains.Kind` is an exact-match eligibility hint. `OnLogin` is injected from `cmd/edugit` and calls `Store.LoginUser` (JIT provisioning; config admin emails become global admins, never demoted). Sessions are TODO #6. Tests use crewjam's `IdentityProvider` in-process as a mock IdP (it needs `Logger` set and an RSA-SHA256 `SignatureMethod`).
 - `cmd/edugit` entrypoint; `internal/` packages for: git smart-HTTP handlers + hooks, SAML/session/token auth, authorization (role + course scope), course/assignment/repo-template logic, PR/review engine (merge via git plumbing, not a working tree), static-site publisher/CI runner, SQLite store with embedded migrations, web UI (templates + static assets).
 - Git push events (pre-/post-receive hooks calling back into the binary) are the central integration point: they drive branch protection, PR updates, and site publishing.
 - Repo-level permission is derived from course role + repo type (teacher repo vs student repo vs team repo); never from per-repo ad hoc ACLs alone.

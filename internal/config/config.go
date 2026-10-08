@@ -8,6 +8,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -21,6 +22,17 @@ type Config struct {
 	LogLevel slog.Level
 	// ShutdownTimeout bounds graceful shutdown.
 	ShutdownTimeout time.Duration
+
+	// PublicURL is the externally visible base URL (SAML endpoints derive
+	// from it). Empty disables SAML.
+	PublicURL string
+	// IDPMetadata is an https URL or file path of the IdP's SAML metadata.
+	IDPMetadata string
+	// StaffDomain and StudentDomain are the exact email domains of staff and
+	// students; logins from other domains are refused when either is set.
+	StaffDomain, StudentDomain string
+	// AdminEmails are emails promoted to global admin on login.
+	AdminEmails []string
 }
 
 // Load parses args (without the program name) and env into a Config.
@@ -38,11 +50,25 @@ func Load(args []string, getenv func(string) string, errOut io.Writer) (Config, 
 	fs.StringVar(&c.Addr, "addr", c.Addr, "HTTP listen address (env EDUGIT_ADDR)")
 	fs.StringVar(&c.DataDir, "data-dir", c.DataDir, "data directory (env EDUGIT_DATA_DIR)")
 	fs.StringVar(&level, "log-level", level, "log level: debug, info, warn, error (env EDUGIT_LOG_LEVEL)")
+	fs.StringVar(&c.PublicURL, "public-url", envOr(getenv, "EDUGIT_PUBLIC_URL", ""), "public base URL, enables SAML (env EDUGIT_PUBLIC_URL)")
+	fs.StringVar(&c.IDPMetadata, "saml-idp-metadata", envOr(getenv, "EDUGIT_SAML_IDP_METADATA", ""), "IdP metadata https URL or file (env EDUGIT_SAML_IDP_METADATA)")
+	fs.StringVar(&c.StaffDomain, "staff-domain", envOr(getenv, "EDUGIT_STAFF_DOMAIN", ""), "staff email domain (env EDUGIT_STAFF_DOMAIN)")
+	fs.StringVar(&c.StudentDomain, "student-domain", envOr(getenv, "EDUGIT_STUDENT_DOMAIN", ""), "student email domain (env EDUGIT_STUDENT_DOMAIN)")
+	admins := envOr(getenv, "EDUGIT_ADMIN_EMAILS", "")
+	fs.StringVar(&admins, "admin-emails", admins, "comma-separated global admin emails (env EDUGIT_ADMIN_EMAILS)")
 	fs.DurationVar(&c.ShutdownTimeout, "shutdown-timeout", c.ShutdownTimeout, "graceful shutdown timeout")
 	if err := fs.Parse(args); err != nil {
 		return Config{}, err
 	}
 
+	for _, e := range strings.Split(admins, ",") {
+		if e = strings.ToLower(strings.TrimSpace(e)); e != "" {
+			c.AdminEmails = append(c.AdminEmails, e)
+		}
+	}
+	if (c.PublicURL == "") != (c.IDPMetadata == "") {
+		return Config{}, fmt.Errorf("public-url and saml-idp-metadata must be set together")
+	}
 	if err := c.LogLevel.UnmarshalText([]byte(level)); err != nil {
 		return Config{}, fmt.Errorf("invalid log level %q: %w", level, err)
 	}

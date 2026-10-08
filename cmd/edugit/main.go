@@ -5,13 +5,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"slices"
 	"syscall"
 	"time"
 
+	"github.com/emilfolino/edugit/internal/auth"
 	"github.com/emilfolino/edugit/internal/config"
 	"github.com/emilfolino/edugit/internal/hooks"
 	"github.com/emilfolino/edugit/internal/store"
@@ -54,9 +58,19 @@ func run() error {
 		return fmt.Errorf("init web: %w", err)
 	}
 
+	root := http.NewServeMux()
+	root.Handle("/", ui.Handler())
+	if cfg.PublicURL != "" {
+		sp, err := newSAML(ctx, cfg, db, log)
+		if err != nil {
+			return err
+		}
+		sp.Routes(root)
+	}
+
 	srv := &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           ui.Handler(),
+		Handler:           root,
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
@@ -80,4 +94,39 @@ func run() error {
 		}
 	}
 	return nil
+}
+
+// newSAML builds the SAML service provider from cfg.
+func newSAML(ctx context.Context, cfg config.Config, db *store.Store, log *slog.Logger) (*auth.SAML, error) {
+	pub, err := url.Parse(cfg.PublicURL)
+	if err != nil || (pub.Scheme != "https" && pub.Scheme != "http") || pub.Host == "" {
+		return nil, fmt.Errorf("invalid public url %q", cfg.PublicURL)
+	}
+	meta, err := auth.LoadIDPMetadata(ctx, cfg.IDPMetadata)
+	if err != nil {
+		return nil, err
+	}
+	key, crt, err := auth.LoadOrCreateKeypair(cfg.DataDir)
+	if err != nil {
+		return nil, fmt.Errorf("saml keypair: %w", err)
+	}
+	return auth.NewSAML(auth.SAMLConfig{
+		PublicURL:   pub,
+		IDPMetadata: meta,
+		Key:         key,
+		Cert:        crt,
+		Domains:     auth.Domains{Staff: cfg.StaffDomain, Student: cfg.StudentDomain},
+		Log:         log,
+		OnLogin: func(w http.ResponseWriter, r *http.Request, id auth.Identity, returnTo string) {
+			u, err := db.LoginUser(r.Context(), id.Subject, id.Email, id.DisplayName, slices.Contains(cfg.AdminEmails, id.Email))
+			if err != nil {
+				log.Error("login user", "err", err)
+				http.Error(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			log.Info("login", "user", u.Username, "admin", u.IsAdmin)
+			// TODO(#6): issue a session cookie and redirect to returnTo.
+			http.Error(w, "signed in as "+u.Username+"; sessions are not implemented yet", http.StatusNotImplemented)
+		},
+	})
 }
