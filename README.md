@@ -4,7 +4,7 @@ A self-hosted Git platform built for software engineering education.
 
 edugit lets teachers run courses where students work the way professionals do: branch, open a pull request, get a review, merge. It is intended as a replacement for GitHub Campus/Enterprise, designed around courses, assignments and teaching from the start rather than adapted to them.
 
-> **Status: early development.** The project scaffold runs (config, HTTP server, embedded UI shell, health endpoint) the SQLite metadata store with its initial schema is in place, and the Git smart-HTTP layer (clone, fetch, push, repo lifecycle, GC) and the git hooks bridge (branch protection, push events) are implemented as libraries, pending authorization (#7) before they are mounted. SAML sign-in (Microsoft Entra ID) works end to end: cookie sessions, CSRF protection and personal access tokens (`/account/tokens`, used as the Git HTTP password) are in place. Authorization and courses are not implemented yet. Design decisions are settled and the work is tracked in [`TODO.md`](TODO.md).
+> **Status: early development.** The project scaffold runs (config, HTTP server, embedded UI shell, health endpoint) the SQLite metadata store with its initial schema is in place, and the Git smart-HTTP layer (clone, fetch, push, repo lifecycle, GC) and the git hooks bridge (branch protection, push events) are implemented as libraries, pending mounting alongside repo creation (#10). SAML sign-in (Microsoft Entra ID) works end to end: cookie sessions, CSRF protection and personal access tokens (`/account/tokens`, used as the Git HTTP password) are in place. Course-scoped authorization (`Can`) exists as a library; courses, repos and enrollment UI are not implemented yet. Design decisions are settled and the work is tracked in [`TODO.md`](TODO.md).
 
 ## Goals
 
@@ -47,6 +47,7 @@ Student code execution (CI and autograding) is a separate, sandboxed component a
 - `internal/gitserver`: bare-repo management and Git smart-HTTP handler (shells out to `git`)
 - `internal/hooks`: pre-/post-receive hooks calling back into the server (branch protection, push events)
 - `internal/auth`: SAML 2.0 service provider (crewjam/saml), sessions, CSRF, personal access tokens
+- `internal/authz`: central course-scoped `Can` check and the git authorizer
 - `internal/web`: HTTP handlers, templates and static assets (embedded)
 - [`TODO.md`](TODO.md): numbered implementation backlog and open questions
 - [`STYLE.md`](STYLE.md): code style, based on the official Go guidance
