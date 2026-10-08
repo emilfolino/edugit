@@ -40,3 +40,57 @@ h1::after {
   content: "_";
   color: var(--accent);
 }
+
+nav {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid var(--ink);
+  font-family: var(--mono);
+}
+
+nav a {
+  color: var(--ink);
+}
+
+nav form {
+  display: inline;
+  margin-left: auto;
+}
+
+nav .who + a {
+  margin-left: auto;
+}
+
+nav .who + a ~ form {
+  margin-left: 0;
+}
+
+form label {
+  display: block;
+  margin: 0.5rem 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin-top: 2rem;
+  width: 100%;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.4rem 0.75rem 0.4rem 0;
+  border-bottom: 1px solid var(--ink);
+}
+
+pre {
+  overflow-x: auto;
+  padding: 0.75rem;
+  border: 1px solid var(--accent);
+}
+
+.error {
+  color: var(--accent);
+}

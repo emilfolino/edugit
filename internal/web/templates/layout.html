@@ -1,0 +1,28 @@
+{{define "head"}}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav>
+    <a href="/">edugit</a>
+    {{if .User}}
+    <span class="who">{{.User.Username}}</span>
+    <a href="/account/tokens">tokens</a>
+    <form method="post" action="/logout">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <button>sign out</button>
+    </form>
+    {{else if .LoginURL}}
+    <a href="{{.LoginURL}}">sign in</a>
+    {{end}}
+  </nav>
+  <main>
+{{end}}
+{{define "foot"}}  </main>
+</body>
+</html>
+{{end}}

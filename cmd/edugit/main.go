@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"slices"
+	"strings"
 	"syscall"
 	"time"
 
@@ -53,7 +54,14 @@ func run() error {
 	}
 	defer db.Close()
 
-	ui, err := web.New(log)
+	opts := web.Options{}
+	var sessions *auth.Sessions
+	if cfg.PublicURL != "" {
+		sessions = &auth.Sessions{Backend: db, Secure: strings.HasPrefix(cfg.PublicURL, "https://")}
+		opts = web.Options{Sessions: sessions, Tokens: db, LoginURL: "/saml/login"}
+		go purgeSessions(ctx, db, log)
+	}
+	ui, err := web.New(log, opts)
 	if err != nil {
 		return fmt.Errorf("init web: %w", err)
 	}
@@ -61,7 +69,7 @@ func run() error {
 	root := http.NewServeMux()
 	root.Handle("/", ui.Handler())
 	if cfg.PublicURL != "" {
-		sp, err := newSAML(ctx, cfg, db, log)
+		sp, err := newSAML(ctx, cfg, db, sessions, log)
 		if err != nil {
 			return err
 		}
@@ -97,7 +105,7 @@ func run() error {
 }
 
 // newSAML builds the SAML service provider from cfg.
-func newSAML(ctx context.Context, cfg config.Config, db *store.Store, log *slog.Logger) (*auth.SAML, error) {
+func newSAML(ctx context.Context, cfg config.Config, db *store.Store, sessions *auth.Sessions, log *slog.Logger) (*auth.SAML, error) {
 	pub, err := url.Parse(cfg.PublicURL)
 	if err != nil || (pub.Scheme != "https" && pub.Scheme != "http") || pub.Host == "" {
 		return nil, fmt.Errorf("invalid public url %q", cfg.PublicURL)
@@ -125,8 +133,31 @@ func newSAML(ctx context.Context, cfg config.Config, db *store.Store, log *slog.
 				return
 			}
 			log.Info("login", "user", u.Username, "admin", u.IsAdmin)
-			// TODO(#6): issue a session cookie and redirect to returnTo.
-			http.Error(w, "signed in as "+u.Username+"; sessions are not implemented yet", http.StatusNotImplemented)
+			if err := sessions.Start(w, r, u.ID); err != nil {
+				log.Error("start session", "err", err)
+				http.Error(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			if returnTo == "" {
+				returnTo = "/"
+			}
+			http.Redirect(w, r, returnTo, http.StatusSeeOther)
 		},
 	})
+}
+
+// purgeSessions deletes expired sessions hourly until ctx is done.
+func purgeSessions(ctx context.Context, db *store.Store, log *slog.Logger) {
+	t := time.NewTicker(time.Hour)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			if err := db.PurgeSessions(ctx, time.Now()); err != nil {
+				log.Error("purge sessions", "err", err)
+			}
+		}
+	}
 }

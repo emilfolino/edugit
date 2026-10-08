@@ -1,0 +1,42 @@
+{{template "head" .}}
+    <h1>Access tokens</h1>
+    <p>Use a token as the password when cloning or pushing over HTTPS. The username can be anything.</p>
+    {{if .Error}}<p class="error">{{.Error}}</p>{{end}}
+    {{if .Secret}}
+    <p>Copy your new token now; it is shown only once.</p>
+    <pre><code>{{.Secret}}</code></pre>
+    {{end}}
+    <form method="post" action="/account/tokens">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <label>Name <input name="name" required maxlength="80"></label>
+      <label>Expires
+        <select name="days">
+          <option value="30">in 30 days</option>
+          <option value="90" selected>in 90 days</option>
+          <option value="365">in a year</option>
+        </select>
+      </label>
+      <button>Create token</button>
+    </form>
+    {{if .Tokens}}
+    <table>
+      <thead><tr><th>Name</th><th>Created</th><th>Expires</th><th>Last used</th><th></th></tr></thead>
+      <tbody>
+      {{range .Tokens}}
+        <tr>
+          <td>{{.Name}}</td>
+          <td>{{.CreatedAt.Format "2006-01-02"}}</td>
+          <td>{{if .ExpiresAt.IsZero}}never{{else}}{{.ExpiresAt.Format "2006-01-02"}}{{end}}</td>
+          <td>{{if .LastUsedAt.IsZero}}never{{else}}{{.LastUsedAt.Format "2006-01-02"}}{{end}}</td>
+          <td>
+            <form method="post" action="/account/tokens/{{.ID}}/revoke">
+              <input type="hidden" name="csrf" value="{{$.CSRF}}">
+              <button>Revoke</button>
+            </form>
+          </td>
+        </tr>
+      {{end}}
+      </tbody>
+    </table>
+    {{end}}
+{{template "foot" .}}

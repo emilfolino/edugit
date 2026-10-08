@@ -21,7 +21,7 @@ Numbered backlog for edugit. Reference items by number. Mark done with `[x]`.
 ## Auth & authorization
 
 5. [x] **SAML SSO.** *(done: `internal/auth` on crewjam/saml; SP-initiated only, metadata/login/ACS, single-use request IDs plus browser-binding cookie, exact-domain eligibility, JIT user via `Store.LoginUser`, admin bootstrap from `EDUGIT_ADMIN_EMAILS`; tested with an in-process mock IdP. The ACS ends in a 501 placeholder until sessions land in #6; pre-enrolment by email lands with #9.)* SP metadata endpoint, AuthnRequest, ACS with signature/assertion validation, replay protection, clock skew. Single logout skipped (Q1). Just-in-time user provisioning from attributes.
-6. [ ] **Sessions and personal access tokens.** Secure cookie sessions, CSRF protection, token issue/revoke UI, tokens hashed at rest, used as HTTP Basic password for git. Optional SSH key support per Q2.
+6. [x] **Sessions and personal access tokens.** *(done: `auth.Sessions` with hashed-at-rest cookie sessions and derived CSRF tokens, token UI at `/account/tokens`, `GitUser` Basic-auth helper. The git handler is still not mounted: it needs the real `can` from #7. SSH not started, per Q2.)* Secure cookie sessions, CSRF protection, token issue/revoke UI, tokens hashed at rest, used as HTTP Basic password for git. Optional SSH key support per Q2.
 7. [ ] **Roles and authorization.** Global `admin`; per-course `course_admin`, `teacher`, `student`. Central `can(user, action, resource)` function; derive repo access from course role and repo type. Role mapping from SAML attributes plus manual enrollment; admin impersonation/"view as" with audit trail. Exhaustive table-driven tests.
 8. [ ] **Audit log.** Record auth events, role changes, permission-sensitive actions; admin viewer.
 
