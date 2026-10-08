@@ -55,19 +55,30 @@ func (s *Store) DeleteRepo(ctx context.Context, repoID int64) error {
 
 // BranchRule is a branch protection rule as stored.
 type BranchRule struct {
-	Pattern    string
-	RequirePR  bool
-	AllowForce bool
+	Pattern           string
+	RequirePR         bool
+	AllowForce        bool
+	RequiredApprovals int
 }
 
 // BranchRules returns the protection rules of the named repository, ordered
 // by pattern. An unknown repository has no rules.
 func (s *Store) BranchRules(ctx context.Context, courseSlug, name string) ([]BranchRule, error) {
-	rows, err := s.db.QueryContext(ctx, `
-		SELECT b.pattern, b.require_pr, b.allow_force_push
+	return s.rules(ctx, `
+		SELECT b.pattern, b.require_pr, b.allow_force_push, b.required_approvals
 		FROM branch_protections b
 		JOIN repos r ON r.id = b.repo_id JOIN courses c ON c.id = r.course_id
 		WHERE c.slug = ? AND r.name = ? ORDER BY b.pattern`, courseSlug, name)
+}
+
+func (s *Store) repoRules(ctx context.Context, repoID int64) ([]BranchRule, error) {
+	return s.rules(ctx, `
+		SELECT pattern, require_pr, allow_force_push, required_approvals
+		FROM branch_protections WHERE repo_id = ? ORDER BY pattern`, repoID)
+}
+
+func (s *Store) rules(ctx context.Context, q string, args ...any) ([]BranchRule, error) {
+	rows, err := s.db.QueryContext(ctx, q, args...)
 	if err != nil {
 		return nil, fmt.Errorf("load branch rules: %w", err)
 	}
@@ -75,7 +86,7 @@ func (s *Store) BranchRules(ctx context.Context, courseSlug, name string) ([]Bra
 	var out []BranchRule
 	for rows.Next() {
 		var b BranchRule
-		if err := rows.Scan(&b.Pattern, &b.RequirePR, &b.AllowForce); err != nil {
+		if err := rows.Scan(&b.Pattern, &b.RequirePR, &b.AllowForce, &b.RequiredApprovals); err != nil {
 			return nil, err
 		}
 		out = append(out, b)
