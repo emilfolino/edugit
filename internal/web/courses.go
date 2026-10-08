@@ -60,6 +60,9 @@ func (s *Server) routeCourses(mux *http.ServeMux) {
 	}
 	if s.opts.Repos != nil && s.opts.Pulls != nil && s.opts.PullGit != nil {
 		s.routePulls(mux)
+		if s.opts.Browse != nil {
+			s.routeBrowse(mux)
+		}
 	}
 	mux.HandleFunc("GET /join/{token}", s.joinPage)
 	mux.HandleFunc("POST /join/{token}", s.join)

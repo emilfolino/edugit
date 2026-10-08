@@ -80,6 +80,7 @@ func run() error {
 			Assignments: db,
 			Pulls:       db,
 			PullGit:     repos,
+			Browse:      repos,
 			Audit:       db,
 			Domains:     auth.Domains{Staff: cfg.StaffDomain, Student: cfg.StudentDomain},
 			PublicURL:   strings.TrimSuffix(cfg.PublicURL, "/"),

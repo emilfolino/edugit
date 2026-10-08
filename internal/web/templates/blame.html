@@ -1,0 +1,11 @@
+{{template "head" .}}
+    {{template "browsehead" .}}
+    {{with .Browse}}
+    <table class="code blame"><tbody>
+      {{range .Blame}}<tr>
+        <td class="who">{{if .First}}<a href="{{$.Browse.Base}}/commit/{{.SHA}}"><code>{{slice .SHA 0 7}}</code></a> {{.Author}}{{end}}</td>
+        <td class="ln">{{.Line}}</td><td><code>{{.Text}}</code></td></tr>
+      {{end}}
+    </tbody></table>
+    {{end}}
+{{template "foot" .}}

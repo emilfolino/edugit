@@ -146,3 +146,16 @@ table.diff .hunk td { opacity: .7; }
 .review { border-top: 1px solid var(--ink); padding: .5rem 0; }
 .review.resolved { opacity: .6; }
 .inlinecomment { margin: .5rem 0; }
+
+/* repository browser */
+.crumbs { font-family: var(--mono); }
+table.tree td { padding: .3rem .5rem; }
+table.code { font-family: var(--mono); font-size: .85em; margin-top: 1rem; }
+table.code td { border-top: 0; padding: 0 .5rem; white-space: pre; }
+table.code td.ln, table.code td.ln a { text-align: right; opacity: .6; color: inherit; user-select: none; }
+table.code td.who { white-space: nowrap; opacity: .8; }
+.tok-k { color: var(--accent); }
+.tok-s { color: #2a7d4f; }
+.tok-n { color: #8a5a00; }
+.tok-c { opacity: .6; font-style: italic; }
+@media (prefers-color-scheme: dark) { .tok-s { color: #6fcf97; } .tok-n { color: #e0b050; } }

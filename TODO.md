@@ -35,7 +35,7 @@ Numbered backlog for edugit. Reference items by number. Mark done with `[x]`.
 ## Web UI
 
 13. [x] **Design system.** Implement the design direction from CLAUDE.md as native CSS (custom properties, grid, `prefers-color-scheme`), system fonts only, accessible contrast and keyboard nav, i18n scaffolding per Q6.
-14. [ ] **Core pages.** Dashboard per role, course page, repo browser (tree, blob view with syntax highlighting without a JS lib, commits, branches, blame, diff), assignment pages, admin console.
+14. [x] **Core pages.** *(done: repo browser at `/courses/{slug}/repos/{repo}/{tree,blob,blame,commits,commit}` with branch switch, lexical syntax highlighting and commit diffs; dashboard, course and assignment pages and the audit console already existed.)* Dashboard per role, course page, repo browser (tree, blob view with syntax highlighting without a JS lib, commits, branches, blame, diff), assignment pages, admin console.
 15. [ ] **Web interactivity with vanilla ES modules.** Progressive enhancement; no build step.
 
 ## Collaboration (GitHub Flow)

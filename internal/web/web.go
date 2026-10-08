@@ -52,6 +52,8 @@ type Options struct {
 	// Pulls and PullGit enable pull requests; they need Repos.
 	Pulls   PullStore
 	PullGit PullGit
+	// Browse enables the read-only repository browser; it needs Pulls.
+	Browse BrowseGit
 	// Audit receives security-relevant events and serves the admin viewer;
 	// nil disables both.
 	Audit Auditor
@@ -138,6 +140,7 @@ type page struct {
 	Asg           *assignmentView
 	Pulls         *pullsView
 	Pull          *pullView
+	Browse        *browseView
 }
 
 func (s *Server) newPage(r *http.Request, title string) page {

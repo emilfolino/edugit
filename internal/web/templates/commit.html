@@ -1,0 +1,19 @@
+{{template "head" .}}
+    {{template "browsehead" .}}
+    {{with .Browse}}
+    <h2>{{.Commit.Subject}}</h2>
+    <p class="meta"><code>{{.Commit.SHA}}</code> · {{.Commit.Author}} · {{.Commit.When.Format "2006-01-02 15:04"}}</p>
+    {{range .Files}}
+    <section class="diff-file">
+      <h3><code>{{.Path}}</code> <span class="meta">{{.Status}}{{if .Binary}} · binary{{else}} · +{{.Added}} −{{.Removed}}{{end}}</span></h3>
+      {{range .Hunks}}
+      <table class="diff"><tbody>
+        <tr class="hunk"><td colspan="3"><code>{{.Header}}</code></td></tr>
+        {{range .Lines}}<tr><td class="ln">{{if .Old}}{{.Old}}{{end}}</td><td class="ln">{{if .New}}{{.New}}{{end}}</td><td class="{{.Class}}"><code>{{.Text}}</code></td></tr>
+        {{end}}
+      </tbody></table>
+      {{end}}
+    </section>
+    {{end}}
+    {{end}}
+{{template "foot" .}}

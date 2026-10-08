@@ -1,0 +1,12 @@
+{{template "head" .}}
+    {{template "browsehead" .}}
+    {{with .Browse}}
+    {{if .Path}}<p class="meta">{{$.L.T "browse.historyof"}} <code>{{.Path}}</code></p>{{end}}
+    {{if .Commits}}
+    <ul class="commits">
+      {{range .Commits}}<li><a href="{{$.Browse.Base}}/commit/{{.SHA}}"><code>{{slice .SHA 0 7}}</code></a> {{.Subject}} <span class="meta">{{.Author}} · {{.When.Format "2006-01-02 15:04"}}</span></li>
+      {{end}}
+    </ul>
+    {{else}}<p>{{$.L.T "browse.empty"}}</p>{{end}}
+    {{end}}
+{{template "foot" .}}

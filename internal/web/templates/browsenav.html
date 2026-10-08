@@ -1,0 +1,17 @@
+{{define "browsehead"}}
+    {{with .Browse}}
+    <h1>{{.Repo}}</h1>
+    <p class="meta"><a href="/courses/{{$.Course.Slug}}">{{$.Course.Title}}</a> ·
+      <a href="{{.Base}}/tree{{.Q}}">{{$.L.T "browse.code"}}</a> ·
+      <a href="{{.Base}}/commits{{.Q}}">{{$.L.T "browse.commits"}}</a> ·
+      <a href="{{.Base}}/pulls">{{$.L.T "browse.pulls"}}</a></p>
+    {{if .Branches}}
+    <form method="get" class="inline" action="{{.Base}}/tree">
+      <label>{{$.L.T "browse.branch"}}
+        <select name="ref" onchange="this.form.submit()">{{$ref := .Ref}}{{range .Branches}}<option{{if eq . $ref}} selected{{end}}>{{.}}</option>{{end}}</select></label>
+      <noscript><button>{{$.L.T "browse.switch"}}</button></noscript>
+    </form>
+    {{end}}
+    <p class="crumbs"><a href="{{.Base}}/tree{{.Q}}">{{.Repo}}</a>{{range .Crumbs}} / <a href="{{.URL}}">{{.Name}}</a>{{end}}</p>
+    {{end}}
+{{end}}

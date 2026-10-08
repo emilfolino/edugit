@@ -21,6 +21,17 @@ var en = map[string]string{
 	"courses.admin":    "Course admin email",
 	"courses.create":   "Create course",
 	"tokens.title":     "Personal access tokens",
+	"browse.code":      "Code",
+	"browse.commits":   "Commits",
+	"browse.pulls":     "Pull requests",
+	"browse.branch":    "Branch",
+	"browse.switch":    "Switch",
+	"browse.empty":     "Nothing here yet.",
+	"browse.blame":     "Blame",
+	"browse.history":   "History",
+	"browse.historyof": "History of",
+	"browse.binary":    "Binary file not shown.",
+	"browse.truncated": "File truncated.",
 }
 
 var sv = map[string]string{
@@ -44,4 +55,15 @@ var sv = map[string]string{
 	"courses.admin":    "Kursadministratörens e-post",
 	"courses.create":   "Skapa kurs",
 	"tokens.title":     "Personliga åtkomsttokens",
+	"browse.code":      "Kod",
+	"browse.commits":   "Commits",
+	"browse.pulls":     "Pull requests",
+	"browse.branch":    "Gren",
+	"browse.switch":    "Byt",
+	"browse.empty":     "Inget här än.",
+	"browse.blame":     "Blame",
+	"browse.history":   "Historik",
+	"browse.historyof": "Historik för",
+	"browse.binary":    "Binärfil visas inte.",
+	"browse.truncated": "Filen är avkortad.",
 }

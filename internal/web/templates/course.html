@@ -19,7 +19,7 @@
       <tbody>
       {{range .Repos}}
       <tr>
-        <td>{{.Name}}{{if .Archived}} <span class="meta">archived</span>{{end}}</td>
+        <td><a href="/courses/{{$.Course.Slug}}/repos/{{.Name}}/tree">{{.Name}}</a>{{if .Archived}} <span class="meta">archived</span>{{end}}</td>
         <td>{{.Kind}}{{if .IsTemplate}} · template{{end}}</td>
         <td><code>{{.CloneURL}}</code></td>
         <td>

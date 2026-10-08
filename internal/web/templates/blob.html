@@ -1,0 +1,14 @@
+{{template "head" .}}
+    {{template "browsehead" .}}
+    {{with .Browse}}
+    <p class="meta">{{.Blob.Size}} B · <a href="{{.Base}}/blame/{{.Path}}{{.Q}}">{{$.L.T "browse.blame"}}</a> · <a href="{{.Base}}/commits?path={{.Path}}{{if .Ref}}&amp;ref={{.Ref}}{{end}}">{{$.L.T "browse.history"}}</a></p>
+    {{if .Blob.Binary}}<p>{{$.L.T "browse.binary"}}</p>
+    {{else}}
+    {{if .Blob.Truncated}}<p class="meta">{{$.L.T "browse.truncated"}}</p>{{end}}
+    <table class="code"><tbody>
+      {{range .Lines}}<tr id="L{{.N}}"><td class="ln"><a href="#L{{.N}}">{{.N}}</a></td><td><code>{{.HTML}}</code></td></tr>
+      {{end}}
+    </tbody></table>
+    {{end}}
+    {{end}}
+{{template "foot" .}}
