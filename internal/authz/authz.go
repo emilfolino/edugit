@@ -47,6 +47,9 @@ const (
 	RepoRead     Action = "repo.read" // clone, fetch, browse
 	RepoWrite    Action = "repo.write"
 	RepoAdmin    Action = "repo.admin" // settings, protection, delete
+	// RepoReview covers commenting on and approving pull requests. Unlike
+	// RepoWrite it is open to requested reviewers and survives archiving.
+	RepoReview Action = "repo.review"
 
 	AssignmentManage Action = "assignment.manage" // create, bulk generate, extensions; staff
 	AssignmentAccept Action = "assignment.accept" // enrolled students only, never admin bypass
@@ -81,6 +84,10 @@ type Resource struct {
 	Archived   bool
 	// IsMember reports an explicit repo_members row for the principal.
 	IsMember bool
+	// IsReviewer reports that the principal was asked to review an open pull
+	// request of the repo (peer review). It grants read access to the pull
+	// request pages and RepoReview, nothing else, and only to enrolled users.
+	IsReviewer bool
 }
 
 // Can reports whether p may perform a on res. It denies by default.
@@ -118,7 +125,12 @@ func Can(p Principal, a Action, res Resource) bool {
 		return staff
 	case RepoAdmin:
 		return staff
+	case RepoReview:
+		return res.Repo && role != RoleNone && (staff || res.IsMember || res.IsReviewer)
 	case RepoRead, RepoWrite:
+		if a == RepoRead && res.IsReviewer && res.Repo && role != RoleNone {
+			return true
+		}
 		if !res.Repo || role == RoleNone {
 			return false
 		}

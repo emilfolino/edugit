@@ -12,6 +12,7 @@ func TestCan(t *testing.T) {
 		return Resource{CourseID: course, Repo: true, Kind: kind, IsTemplate: tmpl, Archived: archived, IsMember: member}
 	}
 	courseRes := Resource{CourseID: course}
+	reviewer := func(r Resource) Resource { r.IsReviewer = true; return r }
 
 	tests := []struct {
 		name string
@@ -77,6 +78,20 @@ func TestCan(t *testing.T) {
 		{"archived blocks member write", roles(RoleStudent), RepoWrite, repo(KindStudent, false, true, true), false},
 		{"archived blocks admin write", admin, RepoWrite, repo(KindStudent, false, true, false), false},
 		{"archived still readable", roles(RoleStudent), RepoRead, repo(KindStudent, false, true, true), true},
+
+		{"requested peer reads repo", roles(RoleStudent), RepoRead, reviewer(repo(KindStudent, false, false, false)), true},
+		{"requested peer reviews", roles(RoleStudent), RepoReview, reviewer(repo(KindStudent, false, false, false)), true},
+		{"requested peer cannot write", roles(RoleStudent), RepoWrite, reviewer(repo(KindStudent, false, false, false)), false},
+		{"requested peer cannot administer", roles(RoleStudent), RepoAdmin, reviewer(repo(KindStudent, false, false, false)), false},
+		{"requested peer must be enrolled", roles(RoleNone), RepoRead, reviewer(repo(KindStudent, false, false, false)), false},
+		{"requested peer must be enrolled to review", roles(RoleNone), RepoReview, reviewer(repo(KindStudent, false, false, false)), false},
+		{"reviewer role in other course does not help", Principal{Roles: map[int64]Role{other: RoleStudent}}, RepoRead, reviewer(repo(KindStudent, false, false, false)), false},
+		{"unrequested student cannot review", roles(RoleStudent), RepoReview, repo(KindStudent, false, false, false), false},
+		{"member reviews own repo", roles(RoleStudent), RepoReview, repo(KindStudent, false, false, true), true},
+		{"teacher reviews", roles(RoleTeacher), RepoReview, repo(KindStudent, false, false, false), true},
+		{"teacher of other course cannot review", Principal{Roles: map[int64]Role{other: RoleTeacher}}, RepoReview, repo(KindStudent, false, false, false), false},
+		{"review survives archiving", roles(RoleTeacher), RepoReview, repo(KindStudent, false, true, false), true},
+		{"review on non-repo resource is denied", roles(RoleTeacher), RepoReview, courseRes, false},
 
 		{"teacher administers repo", roles(RoleTeacher), RepoAdmin, repo(KindStudent, false, false, false), true},
 		{"student member cannot administer", roles(RoleStudent), RepoAdmin, repo(KindStudent, false, false, true), false},
