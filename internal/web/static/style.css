@@ -109,9 +109,68 @@ input:focus-visible {
   .grid > * { grid-column: 1 / -1 !important; }
 }
 
+/* forms: the control always sits below its label */
 form label {
-  display: block;
-  margin: 0.5rem 0;
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.75rem 0;
+}
+
+form label:has(> input[type="checkbox"], > input[type="radio"]) {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+input:not([type="checkbox"], [type="radio"], [type="hidden"], [type="submit"]),
+select,
+textarea {
+  box-sizing: border-box;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  padding: 0.7rem 0.85rem;
+}
+
+textarea {
+  resize: vertical;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* inside table cells and inline forms, controls size to their content */
+td input:not([type="checkbox"], [type="radio"], [type="hidden"]),
+td select,
+form.inline input,
+form.inline select,
+nav select {
+  width: auto;
+}
+
+/* buttons use the accent colour; the nav keeps its plain text buttons */
+button:not(nav button),
+input[type="submit"] {
+  font: inherit;
+  color: #fff;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 0;
+  padding: 0.7rem 1.25rem;
+  cursor: pointer;
+}
+
+button:not(nav button):hover,
+input[type="submit"]:hover {
+  background: color-mix(in srgb, var(--accent) 85%, black);
+  border-color: color-mix(in srgb, var(--accent) 85%, black);
 }
 
 pre {
@@ -129,7 +188,6 @@ pre {
 .courses { list-style: none; padding: 0; }
 .courses li { border-top: 1px solid var(--ink); padding: .75rem 0; display: flex; gap: 1rem; justify-content: space-between; flex-wrap: wrap; }
 .stack { display: grid; gap: .75rem; max-width: 32rem; }
-.stack label { display: grid; gap: .25rem; }
 form.inline { display: inline; }
 table { width: 100%; border-collapse: collapse; margin-top: 2rem; }
 th, td { text-align: left; padding: .4rem .5rem; border-top: 1px solid var(--ink); vertical-align: middle; }
