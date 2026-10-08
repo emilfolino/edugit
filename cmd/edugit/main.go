@@ -19,6 +19,7 @@ import (
 	"github.com/emilfolino/edugit/internal/auth"
 	"github.com/emilfolino/edugit/internal/authz"
 	"github.com/emilfolino/edugit/internal/config"
+	"github.com/emilfolino/edugit/internal/gitserver"
 	"github.com/emilfolino/edugit/internal/hooks"
 	"github.com/emilfolino/edugit/internal/store"
 	"github.com/emilfolino/edugit/internal/web"
@@ -57,17 +58,26 @@ func run() error {
 
 	opts := web.Options{}
 	var sessions *auth.Sessions
+	var authorizer *authz.Authorizer
+	var repos *gitserver.Repos
 	if cfg.PublicURL != "" || cfg.DevLogin {
 		sessions = &auth.Sessions{Backend: db, Secure: strings.HasPrefix(cfg.PublicURL, "https://")}
 		loginURL := "/saml/login"
 		if cfg.DevLogin {
 			loginURL = "/dev/login"
 		}
+		authorizer = &authz.Authorizer{Source: db}
+		if repos, err = newRepos(cfg.DataDir); err != nil {
+			return err
+		}
 		opts = web.Options{
 			Sessions:  sessions,
 			Tokens:    db,
 			Courses:   db,
-			Authz:     &authz.Authorizer{Source: db},
+			Authz:     authorizer,
+			Repos:     db,
+			Disk:      repos,
+			Audit:     db,
 			Domains:   auth.Domains{Staff: cfg.StaffDomain, Student: cfg.StudentDomain},
 			PublicURL: strings.TrimSuffix(cfg.PublicURL, "/"),
 			LoginURL:  loginURL,
@@ -81,6 +91,11 @@ func run() error {
 
 	root := http.NewServeMux()
 	root.Handle("/", ui.Handler())
+	if sessions != nil {
+		if err := setupGit(ctx, repos, db, sessions, authorizer, root, log); err != nil {
+			return err
+		}
+	}
 	if cfg.DevLogin {
 		log.Warn("dev-login enabled: anyone who can reach this address can sign in as any user")
 		root.Handle("/dev/login", devLogin(db, sessions, cfg.AdminEmails, log))

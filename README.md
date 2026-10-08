@@ -4,7 +4,7 @@ A self-hosted Git platform built for software engineering education.
 
 edugit lets teachers run courses where students work the way professionals do: branch, open a pull request, get a review, merge. It is intended as a replacement for GitHub Campus/Enterprise, designed around courses, assignments and teaching from the start rather than adapted to them.
 
-> **Status: early development.** The project scaffold runs (config, HTTP server, embedded UI shell, health endpoint) the SQLite metadata store with its initial schema is in place, and the Git smart-HTTP layer (clone, fetch, push, repo lifecycle, GC) and the git hooks bridge (branch protection, push events) are implemented as libraries, pending mounting alongside repo creation (#10). SAML sign-in (Microsoft Entra ID) works end to end: cookie sessions, CSRF protection and personal access tokens (`/account/tokens`, used as the Git HTTP password) are in place. Course management works: admins create courses, staff enrol students by email list/CSV or invite link, and course admins assign roles (`/courses`). Security-relevant actions are recorded in an audit log that admins can browse at `/admin/audit`. Repos, assignments and the rest are not implemented yet. Design decisions are settled and the work is tracked in [`TODO.md`](TODO.md).
+> **Status: early development.** The project scaffold runs (config, HTTP server, embedded UI shell, health endpoint) the SQLite metadata store with its initial schema is in place, and the Git smart-HTTP layer (clone, fetch, push, repo lifecycle, GC) and the git hooks bridge (branch protection, push events) are mounted and served at `/git/<course>/<repo>.git`. SAML sign-in (Microsoft Entra ID) works end to end: cookie sessions, CSRF protection and personal access tokens (`/account/tokens`, used as the Git HTTP password) are in place. Course management works: admins create courses, staff enrol students by email list/CSV or invite link, and course admins assign roles (`/courses`). Security-relevant actions are recorded in an audit log that admins can browse at `/admin/audit`. Teachers create repositories on the course page and mark them as templates (students see only templates). Assignments, pull requests and the rest are not implemented yet. Design decisions are settled and the work is tracked in [`TODO.md`](TODO.md).
 
 ## Goals
 
@@ -87,7 +87,7 @@ Configuration via flags or environment (flags win):
 | `-admin-emails` | `EDUGIT_ADMIN_EMAILS` | empty; comma-separated global admins |
 | `-dev-login` | | off; passwordless sign-in at `/dev/login`, only with a loopback `-addr` and no public URL |
 
-After signing in, create a personal access token at `/account/tokens`; it is shown once and stored only as a hash. Git will use it as the HTTP Basic password (the username is ignored).
+After signing in, create a personal access token at `/account/tokens`; it is shown once and stored only as a hash. Use it as the HTTP Basic password (the username is ignored): `git clone https://<host>/git/<course>/<repo>.git`. Bare repositories live in `<data-dir>/repos`.
 
 SAML is enabled when `-public-url` and `-saml-idp-metadata` are both set. Register `<public-url>/saml/metadata` (entity ID) and `<public-url>/saml/acs` with the identity provider; the service provider keypair is generated in the data directory on first start. When a domain is set, other email domains are refused. Domains only gate eligibility; they never grant a role.
 
