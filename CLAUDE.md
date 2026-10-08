@@ -45,8 +45,9 @@ Config: flags or env (`-addr`/`EDUGIT_ADDR`, `-data-dir`/`EDUGIT_DATA_DIR`, `-lo
 
 Migrations live in `internal/store/migrations/NNNN_name.sql`, are embedded, forward-only, and each runs in a transaction; add new files, never edit applied ones. Pragmas (foreign keys, WAL, busy timeout) are set per connection in the DSN. Tests use `:memory:` (single connection) or `t.TempDir()`.
 
-## Architecture (planned; `config`, `web` and `store` exist so far)
+## Architecture (planned; `config`, `web`, `store` and `gitserver` exist so far)
 
+- `internal/gitserver`: bare repos at `<root>/<course>/<name>.git`; `Repos.Path` is the only name-to-path resolver (strict name regex). `Handler` serves smart-HTTP at `/git/{course}/{repo}.git/...` via `git upload-pack|receive-pack --stateless-rpc`, with authorization injected as an `Authorizer` func (wired to real auth in #6/#7; not yet mounted in `cmd/edugit`). Git subprocesses use a scrubbed env (`gitEnv`). Tests use real `git` through `httptest`.
 - `cmd/edugit` entrypoint; `internal/` packages for: git smart-HTTP handlers + hooks, SAML/session/token auth, authorization (role + course scope), course/assignment/repo-template logic, PR/review engine (merge via git plumbing, not a working tree), static-site publisher/CI runner, SQLite store with embedded migrations, web UI (templates + static assets).
 - Git push events (pre-/post-receive hooks calling back into the binary) are the central integration point: they drive branch protection, PR updates, and site publishing.
 - Repo-level permission is derived from course role + repo type (teacher repo vs student repo vs team repo); never from per-repo ad hoc ACLs alone.
