@@ -108,7 +108,7 @@ All state is in the data directory: `edugit.db` (SQLite, WAL mode) and the bare 
 
 ## Testing
 
-`make test` runs everything; no network, containers or external services are needed, only `git`. Unit tests sit next to the code. Git behaviour is tested against real `git` in temp dirs (`internal/gitserver`, `internal/hooks`), the SAML flow against an in-process mock IdP (`internal/auth`), and CI against a fake container runtime script. `cmd/edugit/e2e_test.go` starts the whole application and plays a teacher and a student over HTTP and real `git`: course, template push, published site, assignment, protected `main`, branch push, pull request, merge, grading CSV and export. It signs in with dev-login; the SAML sign-in itself is covered in `internal/auth`. Running the CI jobs under real podman is not part of the suite.
+`make test` runs everything; no network, containers or external services are needed, only `git`. Unit tests sit next to the code. Git behaviour is tested against real `git` in temp dirs (`internal/gitserver`, `internal/hooks`), the SAML flow against an in-process mock IdP (`internal/auth`), and CI against a fake container runtime script. `cmd/edugit/e2e_test.go` starts the whole application and plays a teacher and a student over HTTP and real `git`: course, template push, published site, assignment, protected `main`, branch push, pull request, merge, grading CSV and export. It signs in with dev-login; the SAML sign-in itself is covered in `internal/auth`. `routes_test.go` checks the read routes (browser, site, CI, grading, export) against teacher, owner, classmate, outsider and anonymous visitors. Running the CI jobs under real podman is not part of the suite.
 
 ## Security notes
 
