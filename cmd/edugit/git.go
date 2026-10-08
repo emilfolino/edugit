@@ -55,7 +55,7 @@ func newRepos(dataDir string) (*gitserver.Repos, error) {
 // setupGit starts the hook bridge and the GC
 // scheduler, and mounts the git handler on mux. The handler is only mounted
 // together with the hooks so pushes are never unprotected.
-func setupGit(ctx context.Context, repos *gitserver.Repos, db *store.Store, sessions *auth.Sessions, authorizer *authz.Authorizer, mux *http.ServeMux, log *slog.Logger) error {
+func setupGit(ctx context.Context, repos *gitserver.Repos, db *store.Store, sessions *auth.Sessions, authorizer *authz.Authorizer, sink hooks.Sink, mux *http.ServeMux, log *slog.Logger) error {
 	var raw [32]byte
 	if _, err := rand.Read(raw[:]); err != nil {
 		return fmt.Errorf("hook secret: %w", err)
@@ -69,7 +69,7 @@ func setupGit(ctx context.Context, repos *gitserver.Repos, db *store.Store, sess
 		return fmt.Errorf("hook socket dir: %w", err)
 	}
 	sock := filepath.Join(sockDir, "hook.sock")
-	bridge := &hooks.Bridge{Secret: secret, Policy: hooks.Protection{Source: ruleSource{db}}, Sink: pullSink{db}, Log: log}
+	bridge := &hooks.Bridge{Secret: secret, Policy: hooks.Protection{Source: ruleSource{db}}, Sink: sink, Log: log}
 	go func() {
 		defer os.RemoveAll(sockDir)
 		if err := bridge.Serve(ctx, sock); err != nil && ctx.Err() == nil {

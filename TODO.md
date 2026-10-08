@@ -46,7 +46,7 @@ Numbered backlog for edugit. Reference items by number. Mark done with `[x]`.
 
 ## Publishing & CI
 
-19. [ ] **Static course site publishing.** On push to a configured branch of a teacher repo, publish to a per-course URL (e.g. `course.<host>/` or `/sites/<course>/`), atomic swap of served directory, optional sandboxed build command, build logs, preview per branch/PR, custom path config file in repo.
+19. [x] **Static course site publishing.** *(done: one site per course from a teacher repo/branch/dir, exported with `git archive` (symlinks skipped, size caps), atomic symlink swap, served at `/sites/<course>/` to course viewers under a sandbox CSP; republished by the push sink. Build commands, build logs and per-branch/PR previews move to #20.)* On push to a configured branch of a teacher repo, publish to a per-course URL (e.g. `course.<host>/` or `/sites/<course>/`), atomic swap of served directory, optional sandboxed build command, build logs, preview per branch/PR, custom path config file in repo.
 20. [ ] **CI runner (long-term).** Generic job runner triggered by push events with a repo-defined config file; sandboxed execution (per Q4), resource/time limits, logs, status checks on PRs. Used first for site builds, later for autograding.
 21. [ ] **Autograding and grading (roadmap).** Test results as PR checks, rubric-based grading, grade export (CSV/LMS), plagiarism/similarity hooks.
 

@@ -67,6 +67,9 @@ func (s *Server) routeCourses(mux *http.ServeMux) {
 		}
 		if s.opts.Browse != nil {
 			s.routeBrowse(mux)
+			if s.opts.Sites != nil && s.opts.SiteDB != nil && s.opts.Repos != nil {
+				s.routeSites(mux)
+			}
 			if s.opts.Editor != nil {
 				s.routeEditor(mux)
 			}
@@ -142,6 +145,14 @@ func (s *Server) renderCourse(w http.ResponseWriter, r *http.Request, u store.Us
 			return
 		}
 		p.CanCreateRepo = s.opts.Disk != nil && !c.Archived && authz.Can(pr, authz.RepoCreate, res)
+	}
+	if s.opts.SiteDB != nil {
+		if site, err := s.opts.SiteDB.SiteByCourse(r.Context(), c.Slug); err == nil {
+			p.Site = &site
+		} else if !errors.Is(err, store.ErrNotFound) {
+			s.fail(w, "load site", err)
+			return
+		}
 	}
 	if s.opts.Assignments != nil && s.opts.Disk != nil {
 		var err error

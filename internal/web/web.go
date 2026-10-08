@@ -64,6 +64,9 @@ type Options struct {
 	Editor EditGit
 	Policy hooks.Policy
 	Sink   hooks.Sink
+	// Sites and SiteDB enable static course sites; they need Repos.
+	Sites  SitePublisher
+	SiteDB SiteStore
 	// Audit receives security-relevant events and serves the admin viewer;
 	// nil disables both.
 	Audit Auditor
@@ -135,6 +138,7 @@ type page struct {
 	Teaching      []store.CourseRole // courses where the viewer is teacher or course admin
 	Studying      []store.CourseRole // the remaining enrolments
 	Course        store.Course
+	Site          *store.Site
 	Roster        []store.Member
 	CanManage     bool
 	CanRoster     bool

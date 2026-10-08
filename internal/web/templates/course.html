@@ -21,7 +21,15 @@
       </label>
       <button>Save</button>
     </form>
+    <form method="post" action="/courses/{{.Course.Slug}}/site">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <label>Site from teacher repo <input name="repo" value="{{with .Site}}{{.Repo}}{{end}}" placeholder="empty = no site"></label>
+      <label>Branch <input name="branch" value="{{with .Site}}{{.Branch}}{{else}}main{{end}}"></label>
+      <label>Directory <input name="dir" value="{{with .Site}}{{.Dir}}{{end}}" placeholder="repo root"></label>
+      <button>Publish</button>
+    </form>
     {{end}}
+    {{if .Site}}<p><a href="/sites/{{.Course.Slug}}/">Course site</a></p>{{end}}
     {{if or .Repos .CanCreateRepo}}
     <h2>Repositories</h2>
     {{if .Repos}}

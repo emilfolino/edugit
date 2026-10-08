@@ -21,6 +21,7 @@ import (
 	"github.com/emilfolino/edugit/internal/config"
 	"github.com/emilfolino/edugit/internal/gitserver"
 	"github.com/emilfolino/edugit/internal/hooks"
+	"github.com/emilfolino/edugit/internal/sites"
 	"github.com/emilfolino/edugit/internal/store"
 	"github.com/emilfolino/edugit/internal/web"
 )
@@ -60,6 +61,7 @@ func run() error {
 	var sessions *auth.Sessions
 	var authorizer *authz.Authorizer
 	var repos *gitserver.Repos
+	var sink hooks.Sink
 	if cfg.PublicURL != "" || cfg.DevLogin {
 		sessions = &auth.Sessions{Backend: db, Secure: strings.HasPrefix(cfg.PublicURL, "https://")}
 		loginURL := "/saml/login"
@@ -70,6 +72,8 @@ func run() error {
 		if repos, err = newRepos(cfg.DataDir); err != nil {
 			return err
 		}
+		pub := &sites.Publisher{Root: filepath.Join(cfg.DataDir, "sites"), Git: repos}
+		sink = sites.Multi{pullSink{db}, sites.Sink{DB: db, Pub: pub}}
 		opts = web.Options{
 			Sessions:    sessions,
 			Tokens:      db,
@@ -84,7 +88,9 @@ func run() error {
 			Browse:      repos,
 			Editor:      repos,
 			Policy:      hooks.Protection{Source: ruleSource{db}},
-			Sink:        pullSink{db},
+			Sink:        sink,
+			Sites:       pub,
+			SiteDB:      db,
 			Audit:       db,
 			Domains:     auth.Domains{Staff: cfg.StaffDomain, Student: cfg.StudentDomain},
 			PublicURL:   strings.TrimSuffix(cfg.PublicURL, "/"),
@@ -101,7 +107,7 @@ func run() error {
 	root := http.NewServeMux()
 	root.Handle("/", ui.Handler())
 	if sessions != nil {
-		if err := setupGit(ctx, repos, db, sessions, authorizer, root, log); err != nil {
+		if err := setupGit(ctx, repos, db, sessions, authorizer, sink, root, log); err != nil {
 			return err
 		}
 	}
