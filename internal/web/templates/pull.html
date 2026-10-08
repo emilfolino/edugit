@@ -15,7 +15,7 @@
     {{end}}
     {{if .CanWrite}}
     {{if and .Mergeable (not .Gone)}}
-    <form method="post" action="{{$base}}/merge">
+    <form data-confirm="{{$.L.T "confirm.merge"}}" method="post" action="{{$base}}/merge">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
       <select name="strategy" aria-label="Merge strategy">
         <option value="merge">Merge commit</option>

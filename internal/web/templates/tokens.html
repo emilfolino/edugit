@@ -29,7 +29,7 @@
           <td>{{if .ExpiresAt.IsZero}}never{{else}}{{.ExpiresAt.Format "2006-01-02"}}{{end}}</td>
           <td>{{if .LastUsedAt.IsZero}}never{{else}}{{.LastUsedAt.Format "2006-01-02"}}{{end}}</td>
           <td>
-            <form method="post" action="/account/tokens/{{.ID}}/revoke">
+            <form data-confirm="{{$.L.T "confirm.revoke"}}" method="post" action="/account/tokens/{{.ID}}/revoke">
               <input type="hidden" name="csrf" value="{{$.CSRF}}">
               <button>Revoke</button>
             </form>

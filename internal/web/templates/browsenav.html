@@ -8,7 +8,7 @@
     {{if .Branches}}
     <form method="get" class="inline" action="{{.Base}}/tree">
       <label>{{$.L.T "browse.branch"}}
-        <select name="ref" onchange="this.form.submit()">{{$ref := .Ref}}{{range .Branches}}<option{{if eq . $ref}} selected{{end}}>{{.}}</option>{{end}}</select></label>
+        <select name="ref" data-autosubmit>{{$ref := .Ref}}{{range .Branches}}<option{{if eq . $ref}} selected{{end}}>{{.}}</option>{{end}}</select></label>
       <noscript><button>{{$.L.T "browse.switch"}}</button></noscript>
     </form>
     {{end}}

@@ -32,6 +32,9 @@ var en = map[string]string{
 	"browse.historyof": "History of",
 	"browse.binary":    "Binary file not shown.",
 	"browse.truncated": "File truncated.",
+	"confirm.reset":    "Reset this repository? Student work will be replaced.",
+	"confirm.revoke":   "Revoke this? It cannot be undone.",
+	"confirm.merge":    "Merge this pull request?",
 }
 
 var sv = map[string]string{
@@ -66,4 +69,7 @@ var sv = map[string]string{
 	"browse.historyof": "Historik för",
 	"browse.binary":    "Binärfil visas inte.",
 	"browse.truncated": "Filen är avkortad.",
+	"confirm.reset":    "Återställa repot? Studentens arbete ersätts.",
+	"confirm.revoke":   "Återkalla? Det kan inte ångras.",
+	"confirm.merge":    "Slå ihop denna pull request?",
 }

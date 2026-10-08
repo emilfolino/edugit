@@ -135,7 +135,7 @@
       <button>{{if .InviteExpires.IsZero}}Create link{{else}}Replace link{{end}}</button>
     </form>
     {{if not .InviteExpires.IsZero}}
-    <form method="post" action="/courses/{{.Course.Slug}}/invite/revoke" class="inline">
+    <form data-confirm="{{.L.T "confirm.revoke"}}" method="post" action="/courses/{{.Course.Slug}}/invite/revoke" class="inline">
       <input type="hidden" name="csrf" value="{{.CSRF}}">
       <button>Revoke</button>
     </form>

@@ -69,7 +69,7 @@
       <thead><tr><th>Repository</th><th>Owner</th><th></th></tr></thead>
       <tbody>{{range .Repos}}<tr><td>{{.Name}}{{if .Archived}} <span class="meta">locked</span>{{end}}</td><td>{{.Owner}}</td>
         <td>
-          <form method="post" action="/courses/{{$.Course.Slug}}/assignments/{{$.Asg.Slug}}/reset" class="inline">
+          <form data-confirm="{{$.L.T "confirm.reset"}}" method="post" action="/courses/{{$.Course.Slug}}/assignments/{{$.Asg.Slug}}/reset" class="inline">
             <input type="hidden" name="csrf" value="{{$.CSRF}}">
             <input type="hidden" name="repo" value="{{.Name}}">
             <input name="confirm" placeholder="type name to reset" aria-label="Confirm reset of {{.Name}}" size="24">
