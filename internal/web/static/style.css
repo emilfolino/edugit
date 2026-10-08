@@ -146,6 +146,14 @@ textarea:focus-visible {
   outline-offset: 1px;
 }
 
+/* half the width on larger screens, full width on small ones */
+@media (min-width: 48rem) {
+  form:not(.inline) :is(input:not([type="checkbox"], [type="radio"], [type="hidden"], [type="submit"]), select, textarea) {
+    width: 50%;
+    min-width: min(100%, 20rem);
+  }
+}
+
 /* inside table cells and inline forms, controls size to their content */
 td input:not([type="checkbox"], [type="radio"], [type="hidden"]),
 td select,
@@ -187,7 +195,7 @@ pre {
 .meta { color: color-mix(in srgb, var(--ink) 60%, transparent); font-family: var(--mono); font-size: .85em; }
 .courses { list-style: none; padding: 0; }
 .courses li { border-top: 1px solid var(--ink); padding: .75rem 0; display: flex; gap: 1rem; justify-content: space-between; flex-wrap: wrap; }
-.stack { display: grid; gap: .75rem; max-width: 32rem; }
+.stack { display: grid; gap: .75rem; }
 form.inline { display: inline; }
 table { width: 100%; border-collapse: collapse; margin-top: 2rem; }
 th, td { text-align: left; padding: .4rem .5rem; border-top: 1px solid var(--ink); vertical-align: middle; }
