@@ -43,6 +43,9 @@ type Config struct {
 	// DevLogin enables a passwordless sign-in form for local development.
 	// It requires a loopback Addr and no PublicURL.
 	DevLogin bool
+	// TrustProxy takes the client address from the last X-Forwarded-For
+	// entry; set it only behind a reverse proxy that appends it.
+	TrustProxy bool
 }
 
 // Load parses args (without the program name) and env into a Config.
@@ -70,6 +73,7 @@ func Load(args []string, getenv func(string) string, errOut io.Writer) (Config, 
 	fs.BoolVar(&c.CINetwork, "ci-network", false, "let CI jobs that request it use the network")
 	fs.IntVar(&c.CIWorkers, "ci-workers", 2, "concurrent CI jobs")
 	fs.BoolVar(&c.DevLogin, "dev-login", false, "passwordless local sign-in for development; loopback only")
+	fs.BoolVar(&c.TrustProxy, "trust-proxy", false, "take the client address from X-Forwarded-For (only behind a reverse proxy)")
 	fs.DurationVar(&c.ShutdownTimeout, "shutdown-timeout", c.ShutdownTimeout, "graceful shutdown timeout")
 	if err := fs.Parse(args); err != nil {
 		return Config{}, err

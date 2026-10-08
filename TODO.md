@@ -52,7 +52,7 @@ Numbered backlog for edugit. Reference items by number. Mark done with `[x]`.
 
 ## Operations & quality
 
-22. [ ] **Security review.** Path traversal in repo handling, command injection when shelling out to git, SAML validation, CSRF, XSS in rendered Markdown/diffs, sandbox escapes. Rate limiting.
+22. [x] **Security review** (done: shell-out/path audit, CSRF coverage, CSP and hardening headers, token-failure rate limiting, `-trust-proxy`; deferred: rate limits on login and write endpoints, per-user quotas). Path traversal in repo handling, command injection when shelling out to git, SAML validation, CSRF, XSS in rendered Markdown/diffs, sandbox escapes. Rate limiting.
 23. [ ] **Testing strategy.** Unit tests, integration tests using real `git` against temp dirs, end-to-end flow test (SAML mock IdP -> create course -> assignment -> student PR -> merge -> site publish).
 24. [x] **Course export.** Zip with manifest, roster, grades CSVs and git bundles (teacher repos; `?repos=all` adds student repos). GitHub Classroom import dropped (Q5).
 25. [ ] **Deployment.** Default: plain systemd service (unprivileged user, hardening options) behind a reverse proxy (Caddy/nginx) for TLS, data in `/var/lib/edugit`; Dockerfile is optional with `/data` as a volume. The CI runner (#20) must be isolated from the server process/host. Single-binary packaging, systemd unit, reverse proxy/TLS guidance, backups of SQLite + repos, upgrade/migration procedure, monitoring/health endpoint, Dockerfile optional.

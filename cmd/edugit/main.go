@@ -120,7 +120,7 @@ func run() error {
 	root := http.NewServeMux()
 	root.Handle("/", ui.Handler())
 	if sessions != nil {
-		if err := setupGit(ctx, repos, db, sessions, authorizer, sink, root, log); err != nil {
+		if err := setupGit(ctx, repos, db, sessions, authorizer, sink, root, cfg.TrustProxy, log); err != nil {
 			return err
 		}
 	}
@@ -138,7 +138,7 @@ func run() error {
 
 	srv := &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           root,
+		Handler:           web.SecureHeaders(root),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 

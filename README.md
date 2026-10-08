@@ -103,6 +103,10 @@ All state is in the data directory: `edugit.db` (SQLite, WAL mode) and the bare 
 - **Repositories:** back up the repos directory with a filesystem snapshot or `rsync`; git repos tolerate this well, but a snapshot is safest.
 - **Restore:** stop the server, replace `edugit.db` (and remove stale `-wal`/`-shm` files) and the repos directory from the same backup point, then start. Pending migrations are applied automatically on start.
 
+## Security notes
+
+Reviewed in TODO #22. Git subprocesses never go through a shell, use a scrubbed environment and only receive names validated by strict regexes (`Repos.Path`, branch and path validators). State-changing routes require a session-derived CSRF token plus an `Origin`/`Sec-Fetch-Site` check. Every response carries a same-origin Content-Security-Policy (no inline scripts), `X-Frame-Options: DENY`, `nosniff` and a same-origin referrer policy; published course sites replace the CSP with a sandbox. Highlighted code and diffs are HTML-escaped. Bad personal access tokens are throttled per client address (20 failures per 10 minutes, then that address is refused). Behind a reverse proxy pass `-trust-proxy` so the address comes from `X-Forwarded-For`; never set it when the server is directly reachable. CI jobs run in rootless containers without network (see the CI section). Report vulnerabilities privately to the maintainers.
+
 ## Contributing
 
 Pick an item from [`TODO.md`](TODO.md), resolve any open question it depends on, and reference the item number in your commits. Keep dependencies minimal and justify any new one.

@@ -15,6 +15,7 @@ import (
 	"github.com/emilfolino/edugit/internal/authz"
 	"github.com/emilfolino/edugit/internal/gitserver"
 	"github.com/emilfolino/edugit/internal/hooks"
+	"github.com/emilfolino/edugit/internal/ratelimit"
 	"github.com/emilfolino/edugit/internal/store"
 )
 
@@ -55,7 +56,7 @@ func newRepos(dataDir string) (*gitserver.Repos, error) {
 // setupGit starts the hook bridge and the GC
 // scheduler, and mounts the git handler on mux. The handler is only mounted
 // together with the hooks so pushes are never unprotected.
-func setupGit(ctx context.Context, repos *gitserver.Repos, db *store.Store, sessions *auth.Sessions, authorizer *authz.Authorizer, sink hooks.Sink, mux *http.ServeMux, log *slog.Logger) error {
+func setupGit(ctx context.Context, repos *gitserver.Repos, db *store.Store, sessions *auth.Sessions, authorizer *authz.Authorizer, sink hooks.Sink, mux *http.ServeMux, trustProxy bool, log *slog.Logger) error {
 	var raw [32]byte
 	if _, err := rand.Read(raw[:]); err != nil {
 		return fmt.Errorf("hook secret: %w", err)
@@ -77,7 +78,22 @@ func setupGit(ctx context.Context, repos *gitserver.Repos, db *store.Store, sess
 		}
 	}()
 
-	authorizer.Authenticate = sessions.GitUser
+	// Bad tokens are throttled per client address; a blocked address is
+	// refused even with a valid token so guessing gets no oracle.
+	bad := &ratelimit.Failures{Max: 20, Window: 10 * time.Minute}
+	authorizer.Authenticate = func(r *http.Request) (store.User, bool) {
+		ip := ratelimit.ClientIP(r, trustProxy)
+		if bad.Blocked(ip) {
+			return store.User{}, false
+		}
+		u, ok := sessions.GitUser(r)
+		if !ok {
+			if _, pw, has := r.BasicAuth(); has && pw != "" {
+				bad.Fail(ip)
+			}
+		}
+		return u, ok
+	}
 	h := &gitserver.Handler{
 		Repos:        repos,
 		Auth:         authorizer.Git,
