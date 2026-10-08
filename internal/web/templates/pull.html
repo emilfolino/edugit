@@ -36,6 +36,18 @@
     {{range .Files}}
     <section class="diff-file">
       <h3><code>{{.Path}}</code> <span class="meta">{{.Status}}{{if .Binary}} · binary{{else}} · +{{.Added}} −{{.Removed}}{{end}}</span></h3>
+      {{if $.Pull.CanReview}}{{if not .Binary}}
+      <details class="inlinecomment"><summary>Comment on a line</summary>
+        <form method="post" class="stack" action="{{$base}}/comments">
+          <input type="hidden" name="csrf" value="{{$.CSRF}}">
+          <input type="hidden" name="path" value="{{.Path}}">
+          <label>Line (new file) <input name="line" type="number" min="1" required></label>
+          <label>Comment <textarea name="body" rows="3" required></textarea></label>
+          <label>Suggested replacement (optional) <textarea name="suggestion" rows="2"></textarea></label>
+          <button>Comment</button>
+        </form>
+      </details>
+      {{end}}{{end}}
       {{range .Hunks}}
       <table class="diff {{if $.Pull.Split}}split{{end}}">
         <tbody>
@@ -66,5 +78,54 @@
     </form>
     {{end}}
     {{end}}
+    <section id="discussion">
+    <h2>Review</h2>
+    <p class="meta">Approvals on the latest commit: {{.Approval.Approvals}}{{if .Required}} of {{.Required}} required{{end}}{{if .Approval.ChangesRequested}} · changes requested by {{.Approval.ChangesRequested}}{{end}}{{if .Requested}} · review requested from {{range $i, $n := .Requested}}{{if $i}}, {{end}}{{$n}}{{end}}{{end}}</p>
+    {{range .Reviews}}
+    <article class="review"><p class="meta">{{.Reviewer}} · {{if eq .State "approve"}}approved{{else if eq .State "request_changes"}}requested changes{{else}}commented{{end}} · <code>{{printf "%.8s" .CommitSHA}}</code></p>{{if .Body}}<p class="prbody">{{.Body}}</p>{{end}}</article>
+    {{end}}
+    {{range .Comments}}
+    <article class="review{{if .Resolved}} resolved{{end}}" id="comment-{{.ID}}">
+      <p class="meta">{{.Author}}{{if .Path}} · <code>{{.Path}}:{{.Line}}</code>{{end}}{{if .Resolved}} · resolved{{end}}</p>
+      <p class="prbody">{{.Body}}</p>
+      {{if $.Pull.CanReview}}
+      <form method="post" class="inline" action="{{$base}}/comments/{{.ID}}/resolve">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}">
+        <input type="hidden" name="resolved" value="{{if .Resolved}}0{{else}}1{{end}}">
+        <button>{{if .Resolved}}Unresolve{{else}}Resolve{{end}}</button>
+      </form>
+      {{end}}
+    </article>
+    {{end}}
+    {{if .CanReview}}
+    <h3>Add a comment</h3>
+    <form method="post" class="stack" action="{{$base}}/comments">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <label>Comment <textarea name="body" rows="3" required></textarea></label>
+      <button>Comment</button>
+    </form>
+    <h3>Submit a review</h3>
+    <form method="post" class="stack" action="{{$base}}/reviews">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <label>Verdict
+        <select name="state">
+          <option value="comment">Comment</option>
+          <option value="approve">Approve</option>
+          <option value="request_changes">Request changes</option>
+        </select>
+      </label>
+      <label>Summary <textarea name="body" rows="3"></textarea></label>
+      <button>Submit review</button>
+    </form>
+    {{end}}
+    {{if .CanRequest}}
+    <h3>Request a reviewer</h3>
+    <form method="post" class="stack" action="{{$base}}/reviewers">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <label>Username <input name="reviewer" required></label>
+      <button>Request review</button>
+    </form>
+    {{end}}
+    </section>
     {{end}}
 {{template "foot"}}

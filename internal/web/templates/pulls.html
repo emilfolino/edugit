@@ -31,5 +31,14 @@
       <button>Open feedback pull request</button>
     </form>
     {{end}}
+    {{if .CanProtect}}
+    <h2>Required approvals</h2>
+    <form method="post" class="stack" action="/courses/{{$.Course.Slug}}/repos/{{.Repo}}/protection">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <label>Branch pattern <input name="pattern" value="main" required></label>
+      <label>Approvals needed to merge <input name="approvals" type="number" min="0" max="10" value="1" required></label>
+      <button>Save</button>
+    </form>
+    {{end}}
     {{end}}
 {{template "foot"}}

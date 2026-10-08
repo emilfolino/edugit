@@ -151,6 +151,32 @@ func TestPulls(t *testing.T) {
 	expect(teacher(base+"/feedback", url.Values{}), http.StatusBadRequest, "second feedback")
 	expect(teacher("/courses/oop/repos/starter/pulls/feedback", url.Values{}), http.StatusForbidden, "feedback on teacher repo")
 
+	// Review: required approvals, peer review, comments.
+	prot := "/courses/oop/repos/lab1-a/protection"
+	expect(a(prot, url.Values{"pattern": {"main"}, "approvals": {"1"}}), http.StatusForbidden, "student protection")
+	expect(teacher(prot, url.Values{"pattern": {"main"}, "approvals": {"x"}}), http.StatusBadRequest, "bad protection")
+	expect(teacher(prot, url.Values{"pattern": {"main"}, "approvals": {"1"}}), http.StatusSeeOther, "set protection")
+	expect(a(base+"/1/merge", url.Values{"strategy": {"squash"}}), http.StatusBadRequest, "merge without approval")
+	expect(b(base+"/1/reviews", url.Values{"state": {"approve"}}), http.StatusNotFound, "stranger reviews")
+	expect(a(base+"/1/reviewers", url.Values{"reviewer": {"nobody"}}), http.StatusBadRequest, "unknown reviewer")
+	expect(a(base+"/1/reviewers", url.Values{"reviewer": {"a"}}), http.StatusBadRequest, "self reviewer")
+	expect(a(base+"/1/reviewers", url.Values{"reviewer": {"b"}}), http.StatusSeeOther, "request peer")
+	expect(b(base+"/1", nil), http.StatusOK, "peer views")
+	expect(b(base+"/1/reviewers", url.Values{"reviewer": {"t"}}), http.StatusForbidden, "peer requests")
+	expect(b(base+"/1/merge", url.Values{"strategy": {"squash"}}), http.StatusForbidden, "peer merges")
+	expect(a(base+"/1/reviews", url.Values{"state": {"approve"}}), http.StatusBadRequest, "self approve")
+	expect(b(base+"/1/reviews", url.Values{"state": {"comment"}}), http.StatusBadRequest, "empty review")
+	expect(b(base+"/1/comments", url.Values{"body": {"nit"}, "path": {"f.go"}, "line": {"0"}}), http.StatusBadRequest, "bad line")
+	expect(b(base+"/1/comments", url.Values{"body": {"nit"}, "path": {"f.go"}, "line": {"3"}, "suggestion": {"x := 1"}}), http.StatusSeeOther, "inline comment")
+	expect(b(base+"/1/reviews", url.Values{"state": {"request_changes"}, "body": {"fix"}}), http.StatusSeeOther, "request changes")
+	expect(a(base+"/1/merge", url.Values{"strategy": {"squash"}}), http.StatusBadRequest, "merge with changes requested")
+	expect(a(base+"/1/comments/1/resolve", url.Values{}), http.StatusSeeOther, "resolve")
+	expect(a(base+"/1/comments/99/resolve", url.Values{}), http.StatusNotFound, "resolve unknown")
+	expect(b(base+"/1/reviews", url.Values{"state": {"approve"}}), http.StatusSeeOther, "approve")
+	if body := a(base+"/1", nil).Body.String(); !strings.Contains(body, "```suggestion") || !strings.Contains(body, "Approvals on the latest commit: 1 of 1") {
+		t.Fatalf("review view: %s", body)
+	}
+
 	// Merging.
 	expect(a(base+"/1/merge", url.Values{"strategy": {"bogus"}}), http.StatusBadRequest, "bad strategy")
 	git.mergeErr = gitserver.ErrConflict

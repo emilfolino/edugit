@@ -19,6 +19,18 @@ type PullStore interface {
 	Pulls(ctx context.Context, repoID int64, state string) ([]store.PullRequest, error)
 	SetPullState(ctx context.Context, id int64, state, mergeCommit string) error
 	ReopenPull(ctx context.Context, id int64) error
+
+	AddReview(ctx context.Context, prID, reviewerID int64, state, body, sha string) (store.Review, error)
+	Reviews(ctx context.Context, prID int64) ([]store.Review, error)
+	AddComment(ctx context.Context, prID, reviewID, authorID int64, body, path string, line int, sha string) (store.Comment, error)
+	Comments(ctx context.Context, prID int64) ([]store.Comment, error)
+	ResolveComment(ctx context.Context, prID, commentID int64, resolved bool) error
+	Approvals(ctx context.Context, prID int64, sha string) (store.ApprovalState, error)
+	RequestReview(ctx context.Context, prID, reviewerID, byID int64) error
+	ReviewRequests(ctx context.Context, prID int64) ([]string, error)
+	IsRequestedReviewer(ctx context.Context, repoID, userID int64) (bool, error)
+	RequiredApprovals(ctx context.Context, repoID int64, branch string) (int, error)
+	SetRequiredApprovals(ctx context.Context, repoID int64, pattern string, n int) error
 }
 
 // PullGit is the git access pull requests need. *gitserver.Repos implements
@@ -37,6 +49,7 @@ type pullsView struct {
 	Pulls       []store.PullRequest
 	CanWrite    bool
 	CanFeedback bool
+	CanProtect  bool
 }
 
 // pullView is the data of a single pull request page.
@@ -50,6 +63,15 @@ type pullView struct {
 	// Gone is set when the branches can no longer be resolved.
 	Gone     bool
 	CanWrite bool
+
+	Reviews   []store.Review
+	Comments  []store.Comment
+	Requested []string
+	Approval  store.ApprovalState
+	Required  int
+	CanReview bool
+	// CanRequest is set for staff and the author, who may ask for reviewers.
+	CanRequest bool
 }
 
 func (s *Server) routePulls(mux *http.ServeMux) {
@@ -61,6 +83,11 @@ func (s *Server) routePulls(mux *http.ServeMux) {
 	mux.HandleFunc("POST "+base+"/{n}/merge", s.pullMerge)
 	mux.HandleFunc("POST "+base+"/{n}/close", s.pullClose)
 	mux.HandleFunc("POST "+base+"/{n}/reopen", s.pullReopen)
+	mux.HandleFunc("POST "+base+"/{n}/comments", s.reviewComment)
+	mux.HandleFunc("POST "+base+"/{n}/comments/{id}/resolve", s.reviewResolve)
+	mux.HandleFunc("POST "+base+"/{n}/reviews", s.reviewSubmit)
+	mux.HandleFunc("POST "+base+"/{n}/reviewers", s.reviewRequest)
+	mux.HandleFunc("POST /courses/{slug}/repos/{repo}/protection", s.setProtection)
 }
 
 // pullCtx is what every PR handler needs.
@@ -91,6 +118,10 @@ func (s *Server) loadPullRepo(w http.ResponseWriter, r *http.Request, u store.Us
 		return pullCtx{}, false
 	}
 	res := repoResource(store.RepoEntry{Repo: rec, Member: member})
+	if res.IsReviewer, err = s.opts.Pulls.IsRequestedReviewer(r.Context(), rec.ID, u.ID); err != nil {
+		s.fail(w, "load reviewer", err)
+		return pullCtx{}, false
+	}
 	if !authz.Can(pr, authz.RepoRead, res) {
 		http.NotFound(w, r)
 		return pullCtx{}, false
@@ -130,6 +161,7 @@ func (s *Server) renderPulls(w http.ResponseWriter, r *http.Request, pc pullCtx,
 	p.Pulls = &pullsView{
 		Repo: pc.repo.Name, Pulls: list, CanWrite: pc.can(authz.RepoWrite),
 		CanFeedback: pc.repo.Kind != string(authz.KindTeacher) && pc.can(authz.RepoWrite) && authz.Can(pc.pr, authz.RosterView, pc.res),
+		CanProtect:  pc.can(authz.RepoWrite) && authz.Can(pc.pr, authz.RosterView, pc.res),
 	}
 	s.render(w, "pulls.html", p, status)
 }
@@ -285,6 +317,10 @@ func (s *Server) renderPull(w http.ResponseWriter, r *http.Request, pc pullCtx, 
 			}
 		}
 	}
+	if err := s.loadReviews(ctx, pc, v); err != nil {
+		s.fail(w, "load reviews", err)
+		return
+	}
 	p := s.newPage(r, "#"+itoa(pull.Number)+" "+pull.Title)
 	p.Course, p.Error, p.Pull = pc.c, msg, v
 	s.render(w, "pull.html", p, status)
@@ -315,6 +351,10 @@ func (s *Server) pullMerge(w http.ResponseWriter, r *http.Request) {
 	hs, err := s.opts.PullGit.Resolve(r.Context(), pc.c.Slug, pc.repo.Name, pull.Head)
 	if err != nil {
 		s.renderPull(w, r, pc, pull, "The head branch no longer exists.", http.StatusBadRequest)
+		return
+	}
+	if msg := s.approvalGate(r.Context(), pc, pull, hs); msg != "" {
+		s.renderPull(w, r, pc, pull, msg, http.StatusBadRequest)
 		return
 	}
 	title := "Merge pull request #" + itoa(pull.Number) + " from " + pull.Head

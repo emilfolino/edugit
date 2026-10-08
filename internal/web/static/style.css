@@ -115,3 +115,6 @@ table.diff .ln { width: 3rem; text-align: right; opacity: .6; }
 table.diff .add { background: color-mix(in srgb, #2a9d4a 20%, transparent); }
 table.diff .del { background: color-mix(in srgb, var(--accent) 20%, transparent); }
 table.diff .hunk td { opacity: .7; }
+.review { border-top: 1px solid var(--ink); padding: .5rem 0; }
+.review.resolved { opacity: .6; }
+.inlinecomment { margin: .5rem 0; }
