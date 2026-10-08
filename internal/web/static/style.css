@@ -3,6 +3,7 @@
   --ink: #16140f;
   --accent: #d9482b;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --space: 1.5rem; /* the one vertical gap between blocks */
   --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
   color-scheme: light dark;
 }
@@ -31,7 +32,7 @@ main {
 h1 {
   font-family: var(--mono);
   font-size: 2.5rem;
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--space);
   border-bottom: 1px solid var(--ink);
   padding-bottom: 0.5rem;
 }
@@ -109,11 +110,36 @@ input:focus-visible {
   .grid > * { grid-column: 1 / -1 !important; }
 }
 
+/* vertical rhythm: every block has the same space below, headings get more above */
+:is(p, ul, ol, dl, pre, table, form, details, blockquote, .grid, .editor-host) {
+  margin-block: 0 var(--space);
+}
+
+:is(h2, h3) {
+  margin: 2rem 0 0.75rem;
+}
+
+main > :last-child,
+form > :last-child {
+  margin-bottom: 0;
+}
+
+nav form,
+form.inline,
+td form,
+li form {
+  margin: 0;
+}
+
+.stack label {
+  margin: 0;
+}
+
 /* forms: the control always sits below its label */
 form label {
   display: grid;
   gap: 0.35rem;
-  margin: 0.75rem 0;
+  margin: 0 0 1rem;
 }
 
 form label:has(> input[type="checkbox"], > input[type="radio"]) {
@@ -172,6 +198,9 @@ input[type="submit"] {
   border: 1px solid var(--accent);
   border-radius: 0.5rem;
   padding: 0.7rem 1.25rem;
+  min-width: 9rem;
+  text-align: center;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -197,13 +226,13 @@ pre {
 .courses li { border-top: 1px solid var(--ink); padding: .75rem 0; display: flex; gap: 1rem; justify-content: space-between; flex-wrap: wrap; }
 .stack { display: grid; gap: .75rem; }
 form.inline { display: inline; }
-table { width: 100%; border-collapse: collapse; margin-top: 2rem; }
+table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: .4rem .5rem; border-top: 1px solid var(--ink); vertical-align: middle; }
 
 /* pull requests */
 .prbody { white-space: pre-wrap; }
 .commits { list-style: none; padding: 0; }
-table.diff { font-family: var(--mono); font-size: .85em; margin-bottom: 1rem; }
+table.diff { font-family: var(--mono); font-size: .85em; }
 table.diff td { padding: 0 .5rem; border-top: 0; white-space: pre-wrap; }
 table.diff .ln { width: 3rem; text-align: right; opacity: .6; }
 table.diff .add { background: color-mix(in srgb, #2a9d4a 20%, transparent); }
@@ -211,12 +240,12 @@ table.diff .del { background: color-mix(in srgb, var(--accent) 20%, transparent)
 table.diff .hunk td { opacity: .7; }
 .review { border-top: 1px solid var(--ink); padding: .5rem 0; }
 .review.resolved { opacity: .6; }
-.inlinecomment { margin: .5rem 0; }
+.inlinecomment { margin: 0 0 1rem; }
 
 /* repository browser */
 .crumbs { font-family: var(--mono); }
 table.tree td { padding: .3rem .5rem; }
-table.code { font-family: var(--mono); font-size: .85em; margin-top: 1rem; }
+table.code { font-family: var(--mono); font-size: .85em; }
 table.code td { border-top: 0; padding: 0 .5rem; white-space: pre; }
 table.code td.ln, table.code td.ln a { text-align: right; opacity: .6; color: inherit; user-select: none; }
 table.code td.who { white-space: nowrap; opacity: .8; }
@@ -228,4 +257,4 @@ table.code td.who { white-space: nowrap; opacity: .8; }
 
 /* Browser editor */
 .editor { width: 100%; font-family: ui-monospace, monospace; }
-.editor-host { height: 60vh; border: 1px solid currentColor; margin-block: 1rem; }
+.editor-host { height: 60vh; border: 1px solid currentColor; }
