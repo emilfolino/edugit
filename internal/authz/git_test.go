@@ -28,8 +28,8 @@ func TestAuthorizer_Git(t *testing.T) {
 	alice, bob, teach, stranger, root := mk("alice", "alice@student.bth.se", false), mk("bob", "bob@student.bth.se", false),
 		mk("teach", "t@bth.se", false), mk("stranger", "s@student.bth.se", false), mk("root", "r@bth.se", true)
 
-	c, _ := db.CreateCourse(ctx, "oop", "OOP")
-	c2, _ := db.CreateCourse(ctx, "web", "Web")
+	c, _ := db.CreateCourse(ctx, "oop", "OOP", "")
+	c2, _ := db.CreateCourse(ctx, "web", "Web", "")
 	for _, m := range []struct {
 		c    store.Course
 		u    store.User

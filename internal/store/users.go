@@ -68,6 +68,9 @@ func (s *Store) LoginUser(ctx context.Context, subject, email, displayName strin
 	if err != nil {
 		return User{}, fmt.Errorf("login user: %w", err)
 	}
+	if err := bindEnrollments(ctx, tx, u.ID, email); err != nil {
+		return User{}, fmt.Errorf("login user: bind enrolments: %w", err)
+	}
 	if err := tx.Commit(); err != nil {
 		return User{}, fmt.Errorf("login user: %w", err)
 	}

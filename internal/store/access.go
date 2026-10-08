@@ -7,24 +7,6 @@ import (
 	"fmt"
 )
 
-// Course is a course row.
-type Course struct {
-	ID    int64
-	Slug  string
-	Title string
-}
-
-// CreateCourse inserts a course.
-func (s *Store) CreateCourse(ctx context.Context, slug, title string) (Course, error) {
-	c := Course{Slug: slug, Title: title}
-	err := s.db.QueryRowContext(ctx,
-		`INSERT INTO courses (slug, title) VALUES (?, ?) RETURNING id`, slug, title).Scan(&c.ID)
-	if err != nil {
-		return Course{}, fmt.Errorf("create course %q: %w", slug, err)
-	}
-	return c, nil
-}
-
 // SetMembership enrolls the user in the course with role, replacing any
 // existing role. role must be course_admin, teacher or student; source must
 // be manual, saml or import.

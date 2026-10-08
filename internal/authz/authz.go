@@ -40,6 +40,8 @@ const (
 	CourseCreate Action = "course.create" // global admin only
 	CourseView   Action = "course.view"
 	CourseManage Action = "course.manage" // settings, roster, roles
+	RosterView   Action = "roster.view"   // staff
+	RosterEnroll Action = "roster.enroll" // staff, for students; roles need CourseManage
 	RepoCreate   Action = "repo.create"
 	RepoRead     Action = "repo.read" // clone, fetch, browse
 	RepoWrite    Action = "repo.write"
@@ -105,7 +107,7 @@ func Can(p Principal, a Action, res Resource) bool {
 		return role > RoleNone
 	case CourseManage:
 		return role == RoleCourseAdmin
-	case RepoCreate:
+	case RosterView, RosterEnroll, RepoCreate:
 		return staff
 	case RepoAdmin:
 		return staff

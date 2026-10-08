@@ -67,6 +67,17 @@ func (d Domains) Kind(email string) Kind {
 	return KindOther
 }
 
+// AllowsStaffRole reports whether email may hold a teacher or course admin
+// role. Student-domain addresses never may; when a staff domain is
+// configured only it may.
+func (d Domains) AllowsStaffRole(email string) bool {
+	k := d.Kind(email)
+	if k == KindStudent {
+		return false
+	}
+	return d.Staff == "" || k == KindStaff
+}
+
 // restricted reports whether any domain is configured.
 func (d Domains) restricted() bool { return d.Staff != "" || d.Student != "" }
 

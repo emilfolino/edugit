@@ -35,6 +35,13 @@ func TestCan(t *testing.T) {
 		{"admin manages", admin, CourseManage, courseRes, true},
 		{"course admin of other course cannot manage", Principal{Roles: map[int64]Role{other: RoleCourseAdmin}}, CourseManage, courseRes, false},
 
+		{"teacher views roster", roles(RoleTeacher), RosterView, courseRes, true},
+		{"teacher enrolls", roles(RoleTeacher), RosterEnroll, courseRes, true},
+		{"student cannot view roster", roles(RoleStudent), RosterView, courseRes, false},
+		{"student cannot enroll", roles(RoleStudent), RosterEnroll, courseRes, false},
+		{"staff of other course cannot view roster", Principal{Roles: map[int64]Role{other: RoleTeacher}}, RosterView, courseRes, false},
+		{"admin views roster", admin, RosterView, courseRes, true},
+
 		{"teacher creates repo", roles(RoleTeacher), RepoCreate, courseRes, true},
 		{"student cannot create repo", roles(RoleStudent), RepoCreate, courseRes, false},
 
