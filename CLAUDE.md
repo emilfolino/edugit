@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Status
 
-Greenfield. As of this writing the repo contains only this file and `TODO.md`. `TODO.md` is the numbered implementation backlog; keep it current and reference items by number (e.g. "TODO #7"). Update this file once real build/test commands exist; the commands below are the *intended* conventions, not yet verified.
+Early stage. The scaffold (TODO #1) exists: config, HTTP server with embedded templates/static, health endpoint. `TODO.md` is the numbered implementation backlog; keep it current and reference items by number (e.g. "TODO #7"). 
 
 ## Workflow rules
 
@@ -20,7 +20,7 @@ Greenfield. As of this writing the repo contains only this file and `TODO.md`. `
 ## Decisions already made (do not re-litigate)
 
 - **Git layer:** our own app serves git over smart-HTTP by shelling out to the system `git` binary against bare repos on disk. No Gitea/Forgejo embedding.
-- **Backend:** Go, standard library first. Every third-party dependency needs a justification; the explicit goal is avoiding dependency problems later. Go is not installed on the dev machine yet (node, python3, cargo, git, sqlite3 are).
+- **Backend:** Go, standard library first. Every third-party dependency needs a justification; the explicit goal is avoiding dependency problems later. Go is pinned in `.mise.toml` (run via `mise exec -- <cmd>` or an activated mise shell).
 - **Frontend:** server-rendered `html/template` + native CSS + small vanilla ES modules. **No npm, no bundler, no build step, no web fonts.** Assets are embedded in the binary with `go:embed`.
 - **Storage:** SQLite for metadata (users, courses, PRs, reviews, issues); bare git repos on the filesystem. Single binary + data directory = the whole deployment.
 - **Auth:** SAML SSO only (no local passwords). Git over HTTP uses per-user personal access tokens issued after SAML login.
@@ -29,16 +29,19 @@ Greenfield. As of this writing the repo contains only this file and `TODO.md`. `
 - **Pull requests/reviews/issues:** implemented natively in this app (inline review comments, branch protection, required reviews), with hooks for educational features (rubrics, grading).
 - **Static course sites:** published automatically from teacher repos on push, served per course. The user chose a full CI runner as the long-term mechanism; student autograding is a later roadmap item, but design the runner so it can serve both (see TODO).
 
-## Intended commands (verify once the code exists)
+## Commands
 
 ```
-go build ./cmd/edugit        # single binary
-go test ./...                # all tests
-go test ./internal/x -run TestName   # single test
-go vet ./... && gofmt -l .   # lint/format
+make build                       # CGO_ENABLED=0 static binary -> bin/edugit
+make test                        # go test ./...
+make lint                        # go vet + fail on unformatted files
+make run                         # go run ./cmd/edugit
+go test ./internal/web -run TestHandler   # single test
 ```
 
-## Architecture (planned)
+Config: flags or env (`-addr`/`EDUGIT_ADDR`, `-data-dir`/`EDUGIT_DATA_DIR`, `-log-level`/`EDUGIT_LOG_LEVEL`); flags win.
+
+## Architecture (planned; only `config` and `web` exist so far)
 
 - `cmd/edugit` entrypoint; `internal/` packages for: git smart-HTTP handlers + hooks, SAML/session/token auth, authorization (role + course scope), course/assignment/repo-template logic, PR/review engine (merge via git plumbing, not a working tree), static-site publisher/CI runner, SQLite store with embedded migrations, web UI (templates + static assets).
 - Git push events (pre-/post-receive hooks calling back into the binary) are the central integration point: they drive branch protection, PR updates, and site publishing.

@@ -4,7 +4,7 @@ A self-hosted Git platform built for software engineering education.
 
 edugit lets teachers run courses where students work the way professionals do: branch, open a pull request, get a review, merge. It is intended as a replacement for GitHub Campus/Enterprise, designed around courses, assignments and teaching from the start rather than adapted to them.
 
-> **Status: early planning.** There is no runnable code yet. The design decisions are settled and the work is tracked in [`TODO.md`](TODO.md).
+> **Status: early development.** The project scaffold runs (config, HTTP server, embedded UI shell, health endpoint). Git hosting, auth and courses are not implemented yet. Design decisions are settled and the work is tracked in [`TODO.md`](TODO.md).
 
 ## Goals
 
@@ -41,19 +41,31 @@ Student code execution (CI and autograding) is a separate, sandboxed component a
 
 ## Repository layout
 
-Currently only documentation:
-
-- [`README.md`](README.md): this file
+- `cmd/edugit`: entrypoint (wiring only)
+- `internal/config`: flag/env configuration and logger
+- `internal/web`: HTTP handlers, templates and static assets (embedded)
 - [`TODO.md`](TODO.md): numbered implementation backlog and open questions
-- [`LICENSE`](LICENSE): MIT license
 - [`STYLE.md`](STYLE.md): code style, based on the official Go guidance
 - [`CLAUDE.md`](CLAUDE.md): guidance for AI coding agents working in this repo, including architecture decisions
-
-Source will live under `cmd/edugit` and `internal/` once the scaffold exists (TODO #1).
+- [`LICENSE`](LICENSE): MIT license
 
 ## Getting started
 
-Not available yet. Build, test and run instructions will be added when the scaffold lands.
+Go is pinned in `.mise.toml` (Go 1.27); install with [mise](https://mise.jdx.dev/) or any Go 1.27 toolchain.
+
+```
+make build   # static binary at bin/edugit
+make test
+make run     # listens on :8080
+```
+
+Configuration via flags or environment (flags win):
+
+| Flag | Env | Default |
+|------|-----|---------|
+| `-addr` | `EDUGIT_ADDR` | `:8080` |
+| `-data-dir` | `EDUGIT_DATA_DIR` | `./data` |
+| `-log-level` | `EDUGIT_LOG_LEVEL` | `info` |
 
 ## Contributing
 

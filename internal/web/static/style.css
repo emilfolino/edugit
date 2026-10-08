@@ -1,0 +1,42 @@
+:root {
+  --paper: #f4efe6;
+  --ink: #16140f;
+  --accent: #d9482b;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #14120e;
+    --ink: #ece6d8;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  line-height: 1.5;
+}
+
+main {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 4rem 1.5rem;
+}
+
+h1 {
+  font-family: var(--mono);
+  font-size: 2.5rem;
+  margin: 0 0 0.5rem;
+  border-bottom: 1px solid var(--ink);
+  padding-bottom: 0.5rem;
+}
+
+h1::after {
+  content: "_";
+  color: var(--accent);
+}
