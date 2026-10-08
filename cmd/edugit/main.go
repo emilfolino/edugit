@@ -52,11 +52,47 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	handler, closeApp, err := newApp(ctx, cfg, log)
+	if err != nil {
+		return err
+	}
+	defer closeApp()
+
+	srv := &http.Server{
+		Addr:              cfg.Addr,
+		Handler:           handler,
+		ReadHeaderTimeout: 10 * time.Second,
+	}
+
+	errc := make(chan error, 1)
+	go func() {
+		log.Info("listening", "addr", cfg.Addr, "data_dir", cfg.DataDir)
+		errc <- srv.ListenAndServe()
+	}()
+
+	select {
+	case err := <-errc:
+		if !errors.Is(err, http.ErrServerClosed) {
+			return err
+		}
+	case <-ctx.Done():
+		log.Info("shutting down")
+		shutCtx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
+		defer cancel()
+		if err := srv.Shutdown(shutCtx); err != nil {
+			return fmt.Errorf("shutdown: %w", err)
+		}
+	}
+	return nil
+}
+
+// newApp wires the store, git layer, auth and web UI into one handler. The
+// returned func releases the store; background work stops with ctx.
+func newApp(ctx context.Context, cfg config.Config, log *slog.Logger) (http.Handler, func(), error) {
 	db, err := store.Open(ctx, filepath.Join(cfg.DataDir, "edugit.db"))
 	if err != nil {
-		return fmt.Errorf("open store: %w", err)
+		return nil, nil, fmt.Errorf("open store: %w", err)
 	}
-	defer db.Close()
 
 	opts := web.Options{}
 	var sessions *auth.Sessions
@@ -71,7 +107,7 @@ func run() error {
 		}
 		authorizer = &authz.Authorizer{Source: db}
 		if repos, err = newRepos(cfg.DataDir); err != nil {
-			return err
+			return nil, nil, err
 		}
 		pub := &sites.Publisher{Root: filepath.Join(cfg.DataDir, "sites"), Git: repos}
 		multi := sites.Multi{pullSink{db}, sites.Sink{DB: db, Pub: pub}}
@@ -79,7 +115,7 @@ func run() error {
 		if cfg.CIRuntime != "" {
 			runner = &ci.Runner{Store: db, Git: repos, Runtime: cfg.CIRuntime, AllowNetwork: cfg.CINetwork, Workers: cfg.CIWorkers, Log: log}
 			if err := runner.Start(ctx); err != nil {
-				return fmt.Errorf("start ci: %w", err)
+				return nil, nil, fmt.Errorf("start ci: %w", err)
 			}
 			multi = append(multi, runner)
 		}
@@ -114,14 +150,14 @@ func run() error {
 	}
 	ui, err := web.New(log, opts)
 	if err != nil {
-		return fmt.Errorf("init web: %w", err)
+		return nil, nil, fmt.Errorf("init web: %w", err)
 	}
 
 	root := http.NewServeMux()
 	root.Handle("/", ui.Handler())
 	if sessions != nil {
 		if err := setupGit(ctx, repos, db, sessions, authorizer, sink, root, cfg.TrustProxy, log); err != nil {
-			return err
+			return nil, nil, err
 		}
 	}
 	if cfg.DevLogin {
@@ -131,37 +167,12 @@ func run() error {
 	if cfg.PublicURL != "" {
 		sp, err := newSAML(ctx, cfg, db, sessions, log)
 		if err != nil {
-			return err
+			return nil, nil, err
 		}
 		sp.Routes(root)
 	}
 
-	srv := &http.Server{
-		Addr:              cfg.Addr,
-		Handler:           web.SecureHeaders(root),
-		ReadHeaderTimeout: 10 * time.Second,
-	}
-
-	errc := make(chan error, 1)
-	go func() {
-		log.Info("listening", "addr", cfg.Addr, "data_dir", cfg.DataDir)
-		errc <- srv.ListenAndServe()
-	}()
-
-	select {
-	case err := <-errc:
-		if !errors.Is(err, http.ErrServerClosed) {
-			return err
-		}
-	case <-ctx.Done():
-		log.Info("shutting down")
-		shutCtx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
-		defer cancel()
-		if err := srv.Shutdown(shutCtx); err != nil {
-			return fmt.Errorf("shutdown: %w", err)
-		}
-	}
-	return nil
+	return web.SecureHeaders(root), func() { db.Close() }, nil
 }
 
 // newSAML builds the SAML service provider from cfg.
