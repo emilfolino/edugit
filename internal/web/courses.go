@@ -67,6 +67,9 @@ func (s *Server) routeCourses(mux *http.ServeMux) {
 		}
 		if s.opts.Browse != nil {
 			s.routeBrowse(mux)
+			if s.opts.Editor != nil {
+				s.routeEditor(mux)
+			}
 		}
 	}
 	mux.HandleFunc("GET /join/{token}", s.joinPage)

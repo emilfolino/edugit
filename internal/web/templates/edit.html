@@ -1,0 +1,18 @@
+{{template "head" .}}
+    {{template "browsehead" .}}
+    {{with .Edit}}
+    {{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
+    {{end}}
+    <form method="post" action="{{.Browse.Base}}/edit">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <input type="hidden" name="ref" value="{{.Browse.Ref}}">
+      <input type="hidden" name="base" value="{{.Edit.Base}}">
+      <label>Path <input name="path" value="{{.Browse.Path}}" required{{if not .Edit.New}} readonly{{end}}></label>
+      <textarea name="content" rows="24" spellcheck="false" data-editor data-path="{{.Browse.Path}}" class="editor">{{.Edit.Content}}</textarea>
+      <label>Commit message <input name="message" value="{{.Edit.Message}}" required></label>
+      <label>New branch (optional) <input name="new_branch" value="{{.Edit.NewName}}" pattern="[A-Za-z0-9._/-]+"></label>
+      <button type="submit">Commit</button>
+      {{if not .Edit.New}}<button type="submit" name="delete" value="1">Delete file</button>{{end}}
+      <a href="{{.Browse.Base}}/tree{{.Browse.Q}}">Cancel</a>
+    </form>
+{{template "foot" .}}

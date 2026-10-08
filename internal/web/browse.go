@@ -50,6 +50,8 @@ type browseView struct {
 	// Base is the repository URL prefix; Q is the "?ref=" query to keep.
 	Base string
 	Q    string
+	// CanEdit shows the editor links.
+	CanEdit bool
 }
 
 func (s *Server) routeBrowse(mux *http.ServeMux) {
@@ -75,6 +77,7 @@ func (s *Server) browseCtx(w http.ResponseWriter, r *http.Request, title string)
 	}
 	ctx := r.Context()
 	v := &browseView{Repo: pc.repo.Name, Path: strings.TrimSuffix(r.PathValue("path"), "/")}
+	v.CanEdit = s.opts.Editor != nil && pc.can(authz.RepoEdit)
 	v.Base = "/courses/" + pc.c.Slug + "/repos/" + pc.repo.Name
 	v.Ref = r.URL.Query().Get("ref")
 	var err error

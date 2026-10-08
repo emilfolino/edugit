@@ -14,5 +14,6 @@
       </tbody>
     </table>
     {{else}}<p>{{$.L.T "browse.empty"}}</p>{{end}}
+    {{if .CanEdit}}<p><a href="{{.Base}}/edit/{{if .Path}}{{.Path}}/{{end}}new-file.txt{{.Q}}">New file</a></p>{{end}}
     {{end}}
 {{template "foot" .}}

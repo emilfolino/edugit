@@ -6,6 +6,7 @@ import (
 	"context"
 	"embed"
 	"errors"
+	"github.com/emilfolino/edugit/internal/hooks"
 	"html/template"
 	"io/fs"
 	"log/slog"
@@ -56,6 +57,13 @@ type Options struct {
 	Issues IssueStore
 	// Browse enables the read-only repository browser; it needs Pulls.
 	Browse BrowseGit
+	// Editor enables committing from the browser; it needs Browse. Policy
+	// and Sink are the same push policy and sink the git hooks use, so an
+	// editor commit obeys branch protection and fires the same events as a
+	// CLI push.
+	Editor EditGit
+	Policy hooks.Policy
+	Sink   hooks.Sink
 	// Audit receives security-relevant events and serves the admin viewer;
 	// nil disables both.
 	Audit Auditor
@@ -145,6 +153,7 @@ type page struct {
 	Issues        *issuesView
 	Issue         *issueView
 	Browse        *browseView
+	Edit          *editView
 }
 
 func (s *Server) newPage(r *http.Request, title string) page {
@@ -201,12 +210,17 @@ func (s *Server) requireUser(w http.ResponseWriter, r *http.Request) (store.User
 
 // requirePost authenticates a state-changing request and checks CSRF.
 func (s *Server) requirePost(w http.ResponseWriter, r *http.Request) (store.User, bool) {
+	return s.requirePostLimit(w, r, 1<<16)
+}
+
+// requirePostLimit is requirePost with a custom request body limit.
+func (s *Server) requirePostLimit(w http.ResponseWriter, r *http.Request, limit int64) (store.User, bool) {
 	u, ok := s.opts.Sessions.User(r)
 	if !ok {
 		http.Error(w, "sign in required", http.StatusUnauthorized)
 		return store.User{}, false
 	}
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<16)
+	r.Body = http.MaxBytesReader(w, r.Body, limit)
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return store.User{}, false
