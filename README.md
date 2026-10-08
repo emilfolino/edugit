@@ -45,6 +45,7 @@ Currently only documentation:
 
 - [`README.md`](README.md): this file
 - [`TODO.md`](TODO.md): numbered implementation backlog and open questions
+- [`LICENSE`](LICENSE): MIT license
 - [`STYLE.md`](STYLE.md): code style, based on the official Go guidance
 - [`CLAUDE.md`](CLAUDE.md): guidance for AI coding agents working in this repo, including architecture decisions
 
@@ -57,3 +58,7 @@ Not available yet. Build, test and run instructions will be added when the scaff
 ## Contributing
 
 Pick an item from [`TODO.md`](TODO.md), resolve any open question it depends on, and reference the item number in your commits. Keep dependencies minimal and justify any new one.
+
+## License
+
+[MIT](LICENSE) © 2026 Emil Folino
