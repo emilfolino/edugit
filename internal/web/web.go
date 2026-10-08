@@ -115,6 +115,8 @@ type page struct {
 	// Link is a freshly created invite link, or the invite token on the join page.
 	Link          string
 	Courses       []store.CourseRole
+	Teaching      []store.CourseRole // courses where the viewer is teacher or course admin
+	Studying      []store.CourseRole // the remaining enrolments
 	Course        store.Course
 	Roster        []store.Member
 	CanManage     bool

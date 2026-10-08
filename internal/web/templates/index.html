@@ -2,14 +2,25 @@
     {{if .User}}
     <h1>Courses</h1>
     {{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
-    {{if .Courses}}
+    {{if .Teaching}}
+    <h2>Teaching</h2>
     <ul class="courses">
-      {{range .Courses}}
+      {{range .Teaching}}
       <li><a href="/courses/{{.Slug}}">{{.Title}}</a>
-        <span class="meta">{{.Slug}}{{if .Term}} · {{.Term}}{{end}} · {{.Role}}{{if .Archived}} · archived{{end}}</span></li>
+        <span class="meta">{{.Slug}}{{if .Term}} · {{.Term}}{{end}}{{if .Role}} · {{.Role}}{{end}}{{if .Archived}} · archived{{end}}</span></li>
       {{end}}
     </ul>
-    {{else}}
+    {{end}}
+    {{if .Studying}}
+    <h2>Studying</h2>
+    <ul class="courses">
+      {{range .Studying}}
+      <li><a href="/courses/{{.Slug}}">{{.Title}}</a>
+        <span class="meta">{{.Slug}}{{if .Term}} · {{.Term}}{{end}}{{if .Role}} · {{.Role}}{{end}}{{if .Archived}} · archived{{end}}</span></li>
+      {{end}}
+    </ul>
+    {{end}}
+    {{if not .Courses}}
     <p>You are not enrolled in any course yet.</p>
     {{end}}
     {{if .User.IsAdmin}}

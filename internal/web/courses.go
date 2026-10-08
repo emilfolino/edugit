@@ -115,6 +115,7 @@ func (s *Server) dashboard(w http.ResponseWriter, r *http.Request, u store.User)
 		s.fail(w, "list courses", err)
 		return
 	}
+	p.Teaching, p.Studying = splitCourses(p.Courses)
 	s.render(w, "index.html", p, http.StatusOK)
 }
 
@@ -223,7 +224,22 @@ func (s *Server) dashboardError(w http.ResponseWriter, r *http.Request, msg stri
 		return
 	}
 	p.Courses = courses
+	p.Teaching, p.Studying = splitCourses(courses)
 	s.render(w, "index.html", p, http.StatusBadRequest)
+}
+
+// splitCourses separates the courses the viewer teaches from the ones they
+// only study in. A global admin's unenrolled courses (empty role) count as
+// teaching, since they can manage them.
+func splitCourses(all []store.CourseRole) (teaching, studying []store.CourseRole) {
+	for _, c := range all {
+		if c.Role == "student" {
+			studying = append(studying, c)
+		} else {
+			teaching = append(teaching, c)
+		}
+	}
+	return teaching, studying
 }
 
 func (s *Server) archiveCourse(w http.ResponseWriter, r *http.Request) {

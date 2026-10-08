@@ -145,3 +145,18 @@ func TestCourses(t *testing.T) {
 		t.Error("audit page leaks the invite token")
 	}
 }
+
+func TestSplitCourses(t *testing.T) {
+	mk := func(slug, role string) store.CourseRole {
+		return store.CourseRole{Course: store.Course{Slug: slug}, Role: role}
+	}
+	teaching, studying := splitCourses([]store.CourseRole{
+		mk("a", "teacher"), mk("b", "student"), mk("c", "course_admin"), mk("d", ""),
+	})
+	if len(teaching) != 3 || teaching[0].Slug != "a" || teaching[1].Slug != "c" || teaching[2].Slug != "d" {
+		t.Errorf("teaching = %+v", teaching)
+	}
+	if len(studying) != 1 || studying[0].Slug != "b" {
+		t.Errorf("studying = %+v", studying)
+	}
+}
