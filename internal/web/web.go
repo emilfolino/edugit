@@ -17,6 +17,7 @@ import (
 
 	"github.com/emilfolino/edugit/internal/auth"
 	"github.com/emilfolino/edugit/internal/authz"
+	"github.com/emilfolino/edugit/internal/i18n"
 	"github.com/emilfolino/edugit/internal/store"
 )
 
@@ -85,6 +86,7 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServerFS(static)))
 	mux.HandleFunc("GET /healthz", s.healthz)
 	mux.HandleFunc("GET /{$}", s.index)
+	mux.HandleFunc("POST /lang", s.setLang)
 	if s.opts.Sessions != nil {
 		mux.HandleFunc("GET /account/tokens", s.tokens)
 		mux.HandleFunc("POST /account/tokens", s.createToken)
@@ -103,6 +105,9 @@ func (s *Server) Handler() http.Handler {
 // page is the data passed to every template.
 type page struct {
 	Title    string
+	L        i18n.Lang
+	Langs    []i18n.Lang
+	Path     string // current request path, for the language switcher
 	User     *store.User
 	CSRF     string
 	LoginURL string
@@ -136,7 +141,7 @@ type page struct {
 }
 
 func (s *Server) newPage(r *http.Request, title string) page {
-	p := page{Title: title, LoginURL: s.opts.LoginURL}
+	p := page{Title: title, LoginURL: s.opts.LoginURL, L: i18n.FromRequest(r), Langs: i18n.Supported, Path: r.URL.Path}
 	if s.opts.Sessions != nil {
 		if u, ok := s.opts.Sessions.User(r); ok {
 			p.User = &u
@@ -283,4 +288,29 @@ func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
 		s.log.Error("end session", "err", err)
 	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+// setLang stores the chosen UI language in a cookie and returns to the page
+// the user came from. It needs no session, so it also works before sign-in.
+func (s *Server) setLang(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<12)
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+	l, ok := i18n.Parse(r.PostFormValue("lang"))
+	if !ok {
+		http.Error(w, "unsupported language", http.StatusBadRequest)
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name: i18n.Cookie, Value: string(l), Path: "/",
+		MaxAge: 365 * 24 * 3600, SameSite: http.SameSiteLaxMode,
+		Secure: strings.HasPrefix(s.opts.PublicURL, "https://"),
+	})
+	next := r.PostFormValue("next")
+	if !strings.HasPrefix(next, "/") || strings.HasPrefix(next, "//") || strings.ContainsAny(next, "\\\r\n") {
+		next = "/"
+	}
+	http.Redirect(w, r, next, http.StatusSeeOther)
 }

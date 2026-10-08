@@ -148,3 +148,31 @@ func TestAccount(t *testing.T) {
 		t.Errorf("after logout: got %d, want redirect", rec.Code)
 	}
 }
+
+func TestSetLang(t *testing.T) {
+	srv, err := New(slog.New(slog.NewTextHandler(io.Discard, nil)), Options{})
+	h := srv.Handler()
+	if err != nil {
+		t.Fatal(err)
+	}
+	post := func(form string) *httptest.ResponseRecorder {
+		req := httptest.NewRequest("POST", "/lang", strings.NewReader(form))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		return rec
+	}
+	rec := post("lang=sv&next=/account/tokens")
+	if rec.Code != 303 || rec.Header().Get("Location") != "/account/tokens" {
+		t.Fatalf("got %d %q", rec.Code, rec.Header().Get("Location"))
+	}
+	if !strings.Contains(rec.Header().Get("Set-Cookie"), "edugit_lang=sv") {
+		t.Fatalf("cookie: %q", rec.Header().Get("Set-Cookie"))
+	}
+	if loc := post("lang=sv&next=//evil.example").Header().Get("Location"); loc != "/" {
+		t.Fatalf("open redirect: %q", loc)
+	}
+	if post("lang=xx").Code != 400 {
+		t.Fatal("unsupported language accepted")
+	}
+}

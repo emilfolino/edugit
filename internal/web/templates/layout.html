@@ -1,5 +1,5 @@
 {{define "head"}}<!doctype html>
-<html lang="en">
+<html lang="{{.L.Code}}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,21 +7,29 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+  <a class="skip" href="#content">{{.L.T "skip"}}</a>
   <nav>
-    <a href="/">edugit</a>
+    <a class="brand" href="/">edugit</a>
     {{if .User}}
     <span class="who">{{.User.Username}}</span>
-    <a href="/account/tokens">tokens</a>
-    {{if .User.IsAdmin}}<a href="/admin/audit">audit</a>{{end}}
+    <a href="/account/tokens">{{.L.T "nav.tokens"}}</a>
+    {{if .User.IsAdmin}}<a href="/admin/audit">{{.L.T "nav.audit"}}</a>{{end}}
+    {{else if .LoginURL}}
+    <a href="{{.LoginURL}}">{{.L.T "nav.signin"}}</a>
+    {{end}}
+    <span class="grow"></span>
+    <form method="post" action="/lang" class="langs">
+      <input type="hidden" name="next" value="{{.Path}}">
+      {{range .Langs}}<button name="lang" value="{{.Code}}"{{if eq .Code $.L.Code}} aria-current="true"{{end}} lang="{{.Code}}">{{.Name}}</button>{{end}}
+    </form>
+    {{if .User}}
     <form method="post" action="/logout">
       <input type="hidden" name="csrf" value="{{.CSRF}}">
-      <button>sign out</button>
+      <button>{{.L.T "nav.signout"}}</button>
     </form>
-    {{else if .LoginURL}}
-    <a href="{{.LoginURL}}">sign in</a>
     {{end}}
   </nav>
-  <main>
+  <main id="content">
 {{end}}
 {{define "foot"}}  </main>
 </body>

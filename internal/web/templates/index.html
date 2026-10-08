@@ -1,41 +1,41 @@
 {{template "head" .}}
     {{if .User}}
-    <h1>Courses</h1>
+    <h1>{{.L.T "courses.title"}}</h1>
     {{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
     {{if .Teaching}}
-    <h2>Teaching</h2>
+    <h2>{{.L.T "courses.teaching"}}</h2>
     <ul class="courses">
       {{range .Teaching}}
       <li><a href="/courses/{{.Slug}}">{{.Title}}</a>
-        <span class="meta">{{.Slug}}{{if .Term}} · {{.Term}}{{end}}{{if .Role}} · {{.Role}}{{end}}{{if .Archived}} · archived{{end}}</span></li>
+        <span class="meta">{{.Slug}}{{if .Term}} · {{.Term}}{{end}}{{if .Role}} · {{.Role}}{{end}}{{if .Archived}} · {{$.L.T "courses.archived"}}{{end}}</span></li>
       {{end}}
     </ul>
     {{end}}
     {{if .Studying}}
-    <h2>Studying</h2>
+    <h2>{{.L.T "courses.studying"}}</h2>
     <ul class="courses">
       {{range .Studying}}
       <li><a href="/courses/{{.Slug}}">{{.Title}}</a>
-        <span class="meta">{{.Slug}}{{if .Term}} · {{.Term}}{{end}}{{if .Role}} · {{.Role}}{{end}}{{if .Archived}} · archived{{end}}</span></li>
+        <span class="meta">{{.Slug}}{{if .Term}} · {{.Term}}{{end}}{{if .Role}} · {{.Role}}{{end}}{{if .Archived}} · {{$.L.T "courses.archived"}}{{end}}</span></li>
       {{end}}
     </ul>
     {{end}}
     {{if not .Courses}}
-    <p>You are not enrolled in any course yet.</p>
+    <p>{{.L.T "courses.none"}}</p>
     {{end}}
     {{if .User.IsAdmin}}
-    <h2>New course</h2>
+    <h2>{{.L.T "courses.new"}}</h2>
     <form method="post" action="/courses" class="stack">
       <input type="hidden" name="csrf" value="{{.CSRF}}">
-      <label>Short name <input name="slug" required pattern="[a-z0-9][a-z0-9\-]{1,39}"></label>
-      <label>Title <input name="title" required maxlength="120"></label>
-      <label>Term <input name="term" maxlength="40" placeholder="HT2026"></label>
-      <label>Course admin email <input name="admin" type="email" required></label>
-      <button>Create course</button>
+      <label>{{.L.T "courses.slug"}} <input name="slug" required pattern="[a-z0-9][a-z0-9\-]{1,39}"></label>
+      <label>{{.L.T "courses.name"}} <input name="title" required maxlength="120"></label>
+      <label>{{.L.T "courses.term"}} <input name="term" maxlength="40" placeholder="HT2026"></label>
+      <label>{{.L.T "courses.admin"}} <input name="admin" type="email" required></label>
+      <button>{{.L.T "courses.create"}}</button>
     </form>
     {{end}}
     {{else}}
     <h1>edugit</h1>
-    <p>Git for teaching programming.</p>
+    <p>{{.L.T "home.tagline"}}</p>
     {{end}}
 {{template "foot" .}}
