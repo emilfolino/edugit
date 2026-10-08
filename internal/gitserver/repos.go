@@ -268,3 +268,6 @@ func runGit(ctx context.Context, dir string, args ...string) (string, error) {
 	out, err := cmd.CombinedOutput()
 	return strings.TrimSpace(string(out)), err
 }
+
+// ValidName reports whether s may be used as a course or repository name.
+func ValidName(s string) bool { return validName(s) }
