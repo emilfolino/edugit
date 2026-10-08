@@ -4,7 +4,7 @@ A self-hosted Git platform built for software engineering education.
 
 edugit lets teachers run courses where students work the way professionals do: branch, open a pull request, get a review, merge. It is intended as a replacement for GitHub Campus/Enterprise, designed around courses, assignments and teaching from the start rather than adapted to them.
 
-> **Status: early development.** The project scaffold runs (config, HTTP server, embedded UI shell, health endpoint) the SQLite metadata store with its initial schema is in place, and the Git smart-HTTP layer (clone, fetch, push, repo lifecycle, GC) is implemented as a library, pending auth before it is mounted. Auth and courses are not implemented yet. Design decisions are settled and the work is tracked in [`TODO.md`](TODO.md).
+> **Status: early development.** The project scaffold runs (config, HTTP server, embedded UI shell, health endpoint) the SQLite metadata store with its initial schema is in place, and the Git smart-HTTP layer (clone, fetch, push, repo lifecycle, GC) and the git hooks bridge (branch protection, push events) are implemented as libraries, pending auth before they are mounted. Auth and courses are not implemented yet. Design decisions are settled and the work is tracked in [`TODO.md`](TODO.md).
 
 ## Goals
 
@@ -45,6 +45,7 @@ Student code execution (CI and autograding) is a separate, sandboxed component a
 - `internal/config`: flag/env configuration and logger
 - `internal/store`: SQLite store (pure-Go driver) with embedded forward-only migrations
 - `internal/gitserver`: bare-repo management and Git smart-HTTP handler (shells out to `git`)
+- `internal/hooks`: pre-/post-receive hooks calling back into the server (branch protection, push events)
 - `internal/web`: HTTP handlers, templates and static assets (embedded)
 - [`TODO.md`](TODO.md): numbered implementation backlog and open questions
 - [`STYLE.md`](STYLE.md): code style, based on the official Go guidance

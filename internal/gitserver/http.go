@@ -37,6 +37,9 @@ type Handler struct {
 	// MaxRepoBytes rejects pushes to repositories already larger than this.
 	// Zero means no limit.
 	MaxRepoBytes int64
+	// HookEnv returns extra environment variables for receive-pack, used to
+	// tell hooks who is pushing and how to call back. May be nil.
+	HookEnv func(r *http.Request, course, repo string) []string
 }
 
 // Routes registers the git endpoints under /git/ on mux.
@@ -112,7 +115,7 @@ func (h *Handler) infoRefs(w http.ResponseWriter, r *http.Request) {
 		pktLine(w, "# service="+svc+"\n")
 		io.WriteString(w, "0000")
 	}
-	h.run(r.Context(), w, nil, path, proto, sub, "--stateless-rpc", "--advertise-refs")
+	h.run(r.Context(), w, nil, nil, path, proto, sub, "--stateless-rpc", "--advertise-refs")
 }
 
 func (h *Handler) service(svc string) http.HandlerFunc {
@@ -147,14 +150,18 @@ func (h *Handler) service(svc string) http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "application/x-"+svc+"-result")
 		noCache(w)
-		h.run(r.Context(), w, body, path, r.Header.Get("Git-Protocol"), sub, "--stateless-rpc")
+		var env []string
+		if write && h.HookEnv != nil {
+			env = h.HookEnv(r, course, name)
+		}
+		h.run(r.Context(), w, body, env, path, r.Header.Get("Git-Protocol"), sub, "--stateless-rpc")
 	}
 }
 
 // run executes git <sub> <args...> <path>, streaming stdout to w.
-func (h *Handler) run(ctx context.Context, w http.ResponseWriter, stdin io.Reader, path, proto, sub string, args ...string) {
+func (h *Handler) run(ctx context.Context, w http.ResponseWriter, stdin io.Reader, extraEnv []string, path, proto, sub string, args ...string) {
 	cmd := exec.CommandContext(ctx, "git", append([]string{sub}, append(args, path)...)...)
-	cmd.Env = gitEnv()
+	cmd.Env = append(gitEnv(), extraEnv...)
 	if protocolRE.MatchString(proto) {
 		cmd.Env = append(cmd.Env, "GIT_PROTOCOL="+proto)
 	}

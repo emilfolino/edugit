@@ -13,11 +13,16 @@ import (
 	"time"
 
 	"github.com/emilfolino/edugit/internal/config"
+	"github.com/emilfolino/edugit/internal/hooks"
 	"github.com/emilfolino/edugit/internal/store"
 	"github.com/emilfolino/edugit/internal/web"
 )
 
 func main() {
+	// Git hooks re-enter the binary as "edugit hook <name>".
+	if len(os.Args) == 3 && os.Args[1] == "hook" {
+		os.Exit(hooks.Run(context.Background(), os.Args[2], os.Stdin, os.Stderr, os.Getenv))
+	}
 	if err := run(); err != nil {
 		fmt.Fprintln(os.Stderr, "edugit:", err)
 		os.Exit(1)

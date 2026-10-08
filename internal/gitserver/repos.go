@@ -43,6 +43,9 @@ func validName(s string) bool {
 // Repos manages bare repositories under a root directory.
 type Repos struct {
 	root string
+	// InstallHooks, if set, is called with the path of each new repository
+	// before it becomes visible.
+	InstallHooks func(repoPath string) error
 }
 
 // NewRepos returns a Repos rooted at dir, creating it if needed.
@@ -121,6 +124,11 @@ func (r *Repos) Create(ctx context.Context, course, name, defaultBranch string) 
 	} {
 		if out, err := runGit(ctx, tmp, "config", kv[0], kv[1]); err != nil {
 			return fmt.Errorf("git config %s: %w: %s", kv[0], err, out)
+		}
+	}
+	if r.InstallHooks != nil {
+		if err := r.InstallHooks(tmp); err != nil {
+			return fmt.Errorf("install hooks: %w", err)
 		}
 	}
 	if err := os.Rename(tmp, dst); err != nil {
