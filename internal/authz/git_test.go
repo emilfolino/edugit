@@ -92,6 +92,39 @@ func TestAuthorizer_Git(t *testing.T) {
 		})
 	}
 
+	t.Run("editor-only course refuses student pushes", func(t *testing.T) {
+		if err := db.SetCommitMethods(ctx, c.ID, "editor"); err != nil {
+			t.Fatal(err)
+		}
+		defer db.SetCommitMethods(ctx, c.ID, "both")
+		for _, tt := range []struct {
+			name  string
+			who   *store.User
+			write bool
+			want  error
+		}{
+			{"student push", &alice, true, gitserver.ErrForbidden},
+			{"student clone", &alice, false, nil},
+			{"teacher push", &teach, true, nil},
+		} {
+			caller = tt.who
+			if got := z.Git(req, "oop", "alice-lab1", tt.write); got != tt.want {
+				t.Errorf("%s: got %v, want %v", tt.name, got, tt.want)
+			}
+		}
+	})
+
+	t.Run("cli-only course allows student pushes", func(t *testing.T) {
+		if err := db.SetCommitMethods(ctx, c.ID, "cli"); err != nil {
+			t.Fatal(err)
+		}
+		defer db.SetCommitMethods(ctx, c.ID, "both")
+		caller = &alice
+		if got := z.Git(req, "oop", "alice-lab1", true); got != nil {
+			t.Errorf("got %v", got)
+		}
+	})
+
 	t.Run("unenrolled member loses access", func(t *testing.T) {
 		if err := db.RemoveMembership(ctx, c.ID, alice.ID); err != nil {
 			t.Fatal(err)

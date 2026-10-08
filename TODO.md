@@ -64,8 +64,8 @@ Numbered backlog for edugit. Reference items by number. Mark done with `[x]`.
 
 29. [ ] **Translate remaining templates.** Pulls, issues, course, edit and grading templates use English literals; move them to the en/sv catalogs (parity test already enforces both).
 30. [ ] **Handler tests for browse, site, CI and grading routes.** Cover authz (404/403), happy paths and error cases; extends #23.
-31. [ ] **Test: editor-only courses reject CLI pushes.** Git smart-HTTP handler test with `commit_methods=editor` (students refused, staff exempt); extends #28.
-32. [ ] **Store tests for sites.** `store/sites.go`: set, replace, clear, one site per course.
+31. [x] **Test: editor-only courses reject CLI pushes.** Git smart-HTTP handler test with `commit_methods=editor` (students refused, staff exempt); extends #28.
+32. [x] **Store tests for sites.** `store/sites.go`: set, replace, clear, one site per course.
 33. [ ] **Rate limits on login and write endpoints.** Throttle `/saml/login`, `/dev/login`, and state-changing routes per user and address; optional per-user quotas. Extends #22.
 34. [ ] **CI results block merges.** Optional per-branch rule requiring passing checks on the head SHA before `pullMerge`; fail closed. Extends #20 and #17.
-35. [ ] **Clean up published site files on repo delete.** Deleting a site's source repo leaves the build on disk and the `course_sites` row; remove both. Extends #19.
+35. [ ] **Clean up published site files on repo delete.** No user-facing repo deletion exists yet; when it does, also remove the build on disk (the `course_sites` row already cascades, see `TestSites`). Extends #19.
