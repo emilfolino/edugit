@@ -53,6 +53,7 @@ type assignmentView struct {
 	Pending   int
 	CanManage bool
 	CanAccept bool
+	Grade     *gradeView // the viewer's own grade, if graded
 }
 
 func (s *Server) routeAssignments(mux *http.ServeMux) {
@@ -201,6 +202,12 @@ func (s *Server) renderAssignment(w http.ResponseWriter, r *http.Request, u stor
 	if rec, err := s.opts.Assignments.AssignmentRepoFor(ctx, a.ID, u.ID); err == nil {
 		v.Own = &repoView{Name: rec.Name, Kind: rec.Kind, Archived: rec.Archived,
 			CloneURL: s.baseURL(r) + "/git/" + c.Slug + "/" + rec.Name + ".git"}
+		if s.opts.Grades != nil {
+			if v.Grade, err = s.ownGrade(ctx, a, rec.ID); err != nil {
+				s.fail(w, "own grade", err)
+				return
+			}
+		}
 	} else if !errors.Is(err, store.ErrNotFound) {
 		s.fail(w, "assignment repo", err)
 		return

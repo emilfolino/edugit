@@ -11,6 +11,14 @@
     <h2>Your repository</h2>
     <p>{{.Own.Name}}{{if .Own.Archived}} <span class="meta">locked: the deadline has passed</span>{{end}}</p>
     <p><code>git clone {{.Own.CloneURL}}</code></p>
+    {{with .Grade}}
+    <h2>Your grade</h2>
+    <p>{{.Total}} / {{.Max}} points</p>
+    <table>
+      <tbody>{{$g := .}}{{range .Rubric}}<tr><td>{{.Title}}</td><td>{{index $g.Scores .ID}} / {{.MaxPoints}}</td></tr>{{end}}</tbody>
+    </table>
+    {{if .Feedback}}<p>{{.Feedback}}</p>{{end}}
+    {{end}}
     {{else if eq .Mode "individual"}}
     {{if .Open}}
     <form method="post" action="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}/accept">
@@ -78,6 +86,8 @@
         </td></tr>{{end}}</tbody>
     </table>
     {{else}}<p>No repositories yet.</p>{{end}}
+    <p><a href="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}/grading">Rubric and grading</a> ·
+      <a href="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}/grades.csv">Export grades (CSV)</a></p>
     {{if eq .Mode "individual"}}
     <form method="post" action="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}/generate" class="inline">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">

@@ -50,6 +50,8 @@ type Options struct {
 	Disk  RepoDisk
 	// Assignments enables assignments; it needs Repos and Disk.
 	Assignments AssignmentStore
+	// Grades enables rubrics and grading; it needs Assignments.
+	Grades GradeStore
 	// Pulls and PullGit enable pull requests; they need Repos.
 	Pulls   PullStore
 	PullGit PullGit
@@ -154,6 +156,7 @@ type page struct {
 	Assignments   []store.Assignment
 	CanAssign     bool
 	Asg           *assignmentView
+	Grading       *gradingView
 	Pulls         *pullsView
 	Pull          *pullView
 	Issues        *issuesView

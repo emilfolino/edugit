@@ -92,6 +92,7 @@ func run() error {
 			Repos:       db,
 			Disk:        repos,
 			Assignments: db,
+			Grades:      db,
 			Pulls:       db,
 			PullGit:     repos,
 			Issues:      db,
