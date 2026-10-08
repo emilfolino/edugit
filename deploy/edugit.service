@@ -1,0 +1,35 @@
+[Unit]
+Description=edugit
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=edugit
+Group=edugit
+ExecStart=/usr/local/bin/edugit
+EnvironmentFile=/etc/edugit/edugit.env
+StateDirectory=edugit
+WorkingDirectory=/var/lib/edugit
+Restart=on-failure
+RestartSec=2
+
+# Hardening. The server only needs its data directory and the git binary.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+CapabilityBoundingSet=
+AmbientCapabilities=
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

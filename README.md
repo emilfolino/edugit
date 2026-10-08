@@ -89,11 +89,14 @@ Configuration via flags or environment (flags win):
 | `-ci-runtime` | `EDUGIT_CI_RUNTIME` | off; container command (e.g. `podman`) that runs CI jobs |
 | `-ci-network` | | off; lets CI jobs that request it use the network |
 | `-ci-workers` | | 2; concurrent CI jobs |
+| `-trust-proxy` | `EDUGIT_TRUST_PROXY` | off; set to `true` only behind a proxy that overwrites `X-Forwarded-For` |
 | `-dev-login` | | off; passwordless sign-in at `/dev/login`, only with a loopback `-addr` and no public URL |
 
 After signing in, create a personal access token at `/account/tokens`; it is shown once and stored only as a hash. Use it as the HTTP Basic password (the username is ignored): `git clone https://<host>/git/<course>/<repo>.git`. Bare repositories live in `<data-dir>/repos`.
 
 SAML is enabled when `-public-url` and `-saml-idp-metadata` are both set. Register `<public-url>/saml/metadata` (entity ID) and `<public-url>/saml/acs` with the identity provider; the service provider keypair is generated in the data directory on first start. When a domain is set, other email domains are refused. Domains only gate eligibility; they never grant a role.
+
+See [`docs/deployment.md`](docs/deployment.md) for the systemd unit, reverse proxy, CI isolation, backups and upgrades (files in `deploy/`).
 
 ## Backup and restore
 

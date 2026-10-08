@@ -1,0 +1,8 @@
+git.example.edu {
+	encode zstd gzip
+	# Large pushes are bounded by edugit itself.
+	request_body {
+		max_size 600MB
+	}
+	reverse_proxy 127.0.0.1:8080
+}

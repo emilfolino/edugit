@@ -73,7 +73,7 @@ func Load(args []string, getenv func(string) string, errOut io.Writer) (Config, 
 	fs.BoolVar(&c.CINetwork, "ci-network", false, "let CI jobs that request it use the network")
 	fs.IntVar(&c.CIWorkers, "ci-workers", 2, "concurrent CI jobs")
 	fs.BoolVar(&c.DevLogin, "dev-login", false, "passwordless local sign-in for development; loopback only")
-	fs.BoolVar(&c.TrustProxy, "trust-proxy", false, "take the client address from X-Forwarded-For (only behind a reverse proxy)")
+	fs.BoolVar(&c.TrustProxy, "trust-proxy", envOr(getenv, "EDUGIT_TRUST_PROXY", "") == "true", "take the client address from X-Forwarded-For, only behind a reverse proxy (env EDUGIT_TRUST_PROXY=true)")
 	fs.DurationVar(&c.ShutdownTimeout, "shutdown-timeout", c.ShutdownTimeout, "graceful shutdown timeout")
 	if err := fs.Parse(args); err != nil {
 		return Config{}, err
