@@ -1,9 +1,8 @@
 :root {
   --paper: #f4efe6;
   --ink: #16140f;
-  --accent: #4338ca;
+  --accent: #d9482b;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --button: #d9482b; /* vermilion */
   --space: 1.5rem; /* the one vertical gap between blocks */
   --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
   color-scheme: light dark;
@@ -195,13 +194,13 @@ nav select {
   width: auto;
 }
 
-/* buttons are vermilion; the nav keeps its plain text buttons */
+/* buttons use the accent colour; the nav keeps its plain text buttons */
 button:not(nav button),
 input[type="submit"] {
   font: inherit;
   color: #fff;
-  background: var(--button);
-  border: 1px solid var(--button);
+  background: var(--accent);
+  border: 1px solid var(--accent);
   border-radius: 0.5rem;
   padding: 0.7rem 1.25rem;
   min-width: 6rem;
@@ -212,8 +211,8 @@ input[type="submit"] {
 
 button:not(nav button):hover,
 input[type="submit"]:hover {
-  background: color-mix(in srgb, var(--button) 85%, black);
-  border-color: color-mix(in srgb, var(--button) 85%, black);
+  background: color-mix(in srgb, var(--accent) 85%, black);
+  border-color: color-mix(in srgb, var(--accent) 85%, black);
 }
 
 pre {
