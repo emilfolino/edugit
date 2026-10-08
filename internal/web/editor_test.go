@@ -25,7 +25,9 @@ type fakeEditor struct {
 	stale   bool
 }
 
-func (f *fakeEditor) DefaultBranch(context.Context, string, string) (string, error) { return "main", nil }
+func (f *fakeEditor) DefaultBranch(context.Context, string, string) (string, error) {
+	return "main", nil
+}
 func (f *fakeEditor) Branches(context.Context, string, string) ([]string, error) {
 	return []string{"main"}, nil
 }
@@ -35,7 +37,9 @@ func (f *fakeEditor) File(_ context.Context, _, _, _, path string) (gitserver.Bl
 	}
 	return gitserver.Blob{Content: "hello\n", Size: 6}, nil
 }
-func (f *fakeEditor) Resolve(context.Context, string, string, string) (string, error) { return "m1", nil }
+func (f *fakeEditor) Resolve(context.Context, string, string, string) (string, error) {
+	return "m1", nil
+}
 func (f *fakeEditor) CommitFiles(_ context.Context, _, _, branch, from, expect string, ch []gitserver.FileChange, _ gitserver.Identity, _ string) (string, error) {
 	if f.stale {
 		return "", gitserver.ErrStale

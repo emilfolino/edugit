@@ -1,0 +1,1 @@
+monaco-editor 0.57.0 (npm pack, min/vs unmodified). Vendored as static files; the only exception to the no-npm rule: no build step is involved.

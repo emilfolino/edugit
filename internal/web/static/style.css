@@ -159,3 +159,7 @@ table.code td.who { white-space: nowrap; opacity: .8; }
 .tok-n { color: #8a5a00; }
 .tok-c { opacity: .6; font-style: italic; }
 @media (prefers-color-scheme: dark) { .tok-s { color: #6fcf97; } .tok-n { color: #e0b050; } }
+
+/* Browser editor */
+.editor { width: 100%; font-family: ui-monospace, monospace; }
+.editor-host { height: 60vh; border: 1px solid currentColor; margin-block: 1rem; }
