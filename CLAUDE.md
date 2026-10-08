@@ -9,6 +9,8 @@ Greenfield. As of this writing the repo contains only this file and `TODO.md`. `
 ## Workflow rules
 
 - Commit often, in small logical steps.
+- Follow `STYLE.md` for Go, SQL, and frontend code style (based on Effective Go, Go Code Review Comments, and the Google Go Style Guide).
+- Only push to `origin` when the user asks.
 - On every meaningful completion of a TODO item, update `README.md` (status, stack, layout, getting-started/commands) and tick the item in `TODO.md` in the same commit.
 
 ## What this is

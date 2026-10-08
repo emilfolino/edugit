@@ -45,6 +45,7 @@ Currently only documentation:
 
 - [`README.md`](README.md): this file
 - [`TODO.md`](TODO.md): numbered implementation backlog and open questions
+- [`STYLE.md`](STYLE.md): code style, based on the official Go guidance
 - [`CLAUDE.md`](CLAUDE.md): guidance for AI coding agents working in this repo, including architecture decisions
 
 Source will live under `cmd/edugit` and `internal/` once the scaffold exists (TODO #1).
