@@ -18,6 +18,8 @@ import (
 
 const (
 	sessionCookie = "edugit_session"
+	// SessionCookie is the session cookie name, for rate limiting by session.
+	SessionCookie = sessionCookie
 	// CSRFField is the form field carrying the CSRF token.
 	CSRFField = "csrf"
 	// TokenPrefix marks personal access tokens so leaked ones are

@@ -172,7 +172,7 @@ func newApp(ctx context.Context, cfg config.Config, log *slog.Logger) (http.Hand
 		sp.Routes(root)
 	}
 
-	return web.SecureHeaders(root), func() { db.Close() }, nil
+	return web.SecureHeaders(web.RateLimit(root, cfg.TrustProxy)), func() { db.Close() }, nil
 }
 
 // newSAML builds the SAML service provider from cfg.

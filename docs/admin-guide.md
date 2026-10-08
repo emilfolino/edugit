@@ -24,7 +24,7 @@ On the home page, an admin enters a short name (lowercase, digits, hyphens), a t
 - Health: `GET /healthz`.
 - Logs: structured, to stderr (journal under systemd). Raise detail with `EDUGIT_LOG_LEVEL=debug`.
 - Sessions and expired data are purged automatically. Past an assignment's deadline the student repositories lock themselves.
-- Rate limiting: bad personal access tokens block the client address for git after 20 failures in 10 minutes. Restarting the server clears the block.
+- Rate limiting: bad personal access tokens block the client address for git after 20 failures in 10 minutes. Sign-in endpoints allow 60 requests a minute per address and each session 300 writes a minute; beyond that users get `429 too many requests` for a minute. Restarting the server clears all blocks.
 - A student who loses access to git can revoke and recreate tokens at `/account/tokens`.
 
 ## Troubleshooting
