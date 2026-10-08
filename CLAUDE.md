@@ -6,6 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Greenfield. As of this writing the repo contains only this file and `TODO.md`. `TODO.md` is the numbered implementation backlog; keep it current and reference items by number (e.g. "TODO #7"). Update this file once real build/test commands exist; the commands below are the *intended* conventions, not yet verified.
 
+## Workflow rules
+
+- Commit often, in small logical steps.
+- On every meaningful completion of a TODO item, update `README.md` (status, stack, layout, getting-started/commands) and tick the item in `TODO.md` in the same commit.
+
 ## What this is
 
 **edugit**: a self-hosted Git platform designed for software engineering education, replacing GitHub Campus/Enterprise. Students work in a realistic GitHub Flow (branch, PR, review, merge) on repos generated from teacher-provided material.
