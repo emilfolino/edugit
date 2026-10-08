@@ -32,6 +32,10 @@ func (d *fakeDisk) Create(_ context.Context, course, name, _ string) error {
 
 func (d *fakeDisk) Delete(string, string) error { return nil }
 
+func (d *fakeDisk) Generate(_ context.Context, course, _, name string, _ bool) error {
+	return d.Create(context.Background(), course, name, "")
+}
+
 func TestRepos(t *testing.T) {
 	ctx := context.Background()
 	db, err := store.Open(ctx, ":memory:")

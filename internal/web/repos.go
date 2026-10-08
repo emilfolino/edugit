@@ -25,6 +25,9 @@ type RepoStore interface {
 type RepoDisk interface {
 	Create(ctx context.Context, course, name, defaultBranch string) error
 	Delete(course, name string) error
+	// Generate creates name from the template repo's content, with fresh
+	// (single-commit) or copied history.
+	Generate(ctx context.Context, course, template, name string, fresh bool) error
 }
 
 // repoView is a repository as shown on the course page.

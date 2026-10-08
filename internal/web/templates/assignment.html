@@ -1,0 +1,88 @@
+{{template "head" .}}
+    {{with .Asg}}
+    <h1>{{.Title}}</h1>
+    <p class="meta"><a href="/courses/{{$.Course.Slug}}">{{$.Course.Title}}</a> · {{.Mode}}{{if eq .Mode "team"}} (up to {{.TeamSize}}){{end}} · template {{.TemplateName}} · {{.History}} history{{if not .Deadline.IsZero}} · due {{.Deadline.Format "2006-01-02 15:04"}} UTC{{end}}</p>
+    {{if $.Error}}<p class="error" role="alert">{{$.Error}}</p>{{end}}
+    {{if $.Notice}}<p class="notice" role="status">{{$.Notice}}</p>{{end}}
+    {{if $.Skipped}}<p>Failed for:</p><ul class="skipped">{{range $.Skipped}}<li>{{.}}</li>{{end}}</ul>{{end}}
+    {{if .CanAccept}}
+    {{if not .Deadline.IsZero}}<p>Your deadline: {{.Effective.Format "2006-01-02 15:04"}} UTC{{if not .Open}} (closed){{end}}</p>{{end}}
+    {{if .Own}}
+    <h2>Your repository</h2>
+    <p>{{.Own.Name}}{{if .Own.Archived}} <span class="meta">archived</span>{{end}}</p>
+    <p><code>git clone {{.Own.CloneURL}}</code></p>
+    {{else if eq .Mode "individual"}}
+    {{if .Open}}
+    <form method="post" action="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}/accept">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <button>Accept assignment</button>
+    </form>
+    {{else}}<p>This assignment is closed.</p>{{end}}
+    {{end}}
+    {{if eq .Mode "team"}}
+    <h2>Teams</h2>
+    {{if .Own}}
+    {{if .Open}}
+    <form method="post" action="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}/teams/leave" class="inline">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <button>Leave team</button>
+    </form>
+    {{end}}
+    {{end}}
+    {{end}}
+    {{end}}
+    {{if eq .Mode "team"}}
+    {{if .Teams}}
+    <table>
+      <thead><tr><th>Team</th><th>Members</th><th>Repository</th><th></th></tr></thead>
+      <tbody>
+      {{range .Teams}}
+      <tr>
+        <td>{{.Name}}</td>
+        <td>{{range $i, $m := .Members}}{{if $i}}, {{end}}{{$m}}{{end}}</td>
+        <td>{{.Repo}}</td>
+        <td>
+          {{if and $.Asg.CanAccept $.Asg.Open (not $.Asg.InTeam)}}
+          <form method="post" action="/courses/{{$.Course.Slug}}/assignments/{{$.Asg.Slug}}/teams/{{.ID}}/join" class="inline">
+            <input type="hidden" name="csrf" value="{{$.CSRF}}">
+            <button>Join</button>
+          </form>
+          {{end}}
+        </td>
+      </tr>
+      {{end}}
+      </tbody>
+    </table>
+    {{else}}<p>No teams yet.</p>{{end}}
+    {{if and .CanAccept .Open (not .InTeam)}}
+    <form method="post" action="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}/teams" class="stack">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <label>New team name <input name="name" required maxlength="40" pattern="[a-z0-9][a-z0-9\-]*"></label>
+      <button>Create team</button>
+    </form>
+    {{end}}
+    {{end}}
+    {{if .CanManage}}
+    <h2>Repositories</h2>
+    {{if .Repos}}
+    <table>
+      <thead><tr><th>Repository</th><th>Owner</th></tr></thead>
+      <tbody>{{range .Repos}}<tr><td>{{.Name}}{{if .Archived}} <span class="meta">archived</span>{{end}}</td><td>{{.Owner}}</td></tr>{{end}}</tbody>
+    </table>
+    {{else}}<p>No repositories yet.</p>{{end}}
+    {{if eq .Mode "individual"}}
+    <form method="post" action="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}/generate" class="inline">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <button>Generate for {{.Pending}} students without one</button>
+    </form>
+    {{end}}
+    <h2>Extension</h2>
+    <form method="post" action="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}/extend" class="stack">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <label>Student email <input name="email" type="email" required></label>
+      <label>New deadline (UTC; empty removes) <input name="deadline" type="datetime-local"></label>
+      <button>Set extension</button>
+    </form>
+    {{end}}
+    {{end}}
+{{template "foot" .}}

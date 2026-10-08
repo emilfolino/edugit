@@ -47,6 +47,9 @@ const (
 	RepoRead     Action = "repo.read" // clone, fetch, browse
 	RepoWrite    Action = "repo.write"
 	RepoAdmin    Action = "repo.admin" // settings, protection, delete
+
+	AssignmentManage Action = "assignment.manage" // create, bulk generate, extensions; staff
+	AssignmentAccept Action = "assignment.accept" // enrolled students only, never admin bypass
 )
 
 // RepoKind mirrors repos.kind.
@@ -94,6 +97,9 @@ func Can(p Principal, a Action, res Resource) bool {
 	if a == CourseCreate || a == AuditView {
 		return p.IsAdmin
 	}
+	if a == AssignmentAccept {
+		return p.Roles[res.CourseID] == RoleStudent
+	}
 	if a == RepoWrite && res.Archived {
 		return false
 	}
@@ -108,7 +114,7 @@ func Can(p Principal, a Action, res Resource) bool {
 		return role > RoleNone
 	case CourseManage:
 		return role == RoleCourseAdmin
-	case RosterView, RosterEnroll, RepoCreate:
+	case RosterView, RosterEnroll, RepoCreate, AssignmentManage:
 		return staff
 	case RepoAdmin:
 		return staff

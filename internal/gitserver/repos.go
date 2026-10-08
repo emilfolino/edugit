@@ -140,6 +140,57 @@ func (r *Repos) Create(ctx context.Context, course, name, defaultBranch string) 
 	return nil
 }
 
+// Generate creates the repository name from the template repository. With
+// fresh the new repo gets a single commit holding the template's tree on its
+// default branch; otherwise all branches and tags are copied. Refs are written
+// with plumbing so the hooks (and branch protection) are not involved. On
+// failure the new repository is removed.
+func (r *Repos) Generate(ctx context.Context, course, template, name string, fresh bool) (err error) {
+	src, err := r.Path(course, template)
+	if err != nil {
+		return err
+	}
+	head, err := runGit(ctx, src, "symbolic-ref", "--short", "HEAD")
+	if err != nil || !validBranch(head) {
+		return fmt.Errorf("template %q: cannot determine default branch", template)
+	}
+	if _, err := runGit(ctx, src, "rev-parse", "--verify", "--quiet", "refs/heads/"+head+"^{commit}"); err != nil {
+		return fmt.Errorf("template %q has no commits", template)
+	}
+	if err := r.Create(ctx, course, name, head); err != nil {
+		return err
+	}
+	dst, _ := r.Path(course, name)
+	defer func() {
+		if err != nil {
+			_ = os.RemoveAll(dst)
+		}
+	}()
+	if !fresh {
+		if out, err := runGit(ctx, dst, "fetch", "--quiet", "--no-write-fetch-head", "--tags", src,
+			"+refs/heads/*:refs/heads/*"); err != nil {
+			return fmt.Errorf("copy template: %w: %s", err, out)
+		}
+		return nil
+	}
+	if out, err := runGit(ctx, dst, "fetch", "--quiet", src, "refs/heads/"+head); err != nil {
+		return fmt.Errorf("fetch template: %w: %s", err, out)
+	}
+	cmd := exec.CommandContext(ctx, "git", "commit-tree", "FETCH_HEAD^{tree}", "-m", "Initial commit from template "+template)
+	cmd.Dir = dst
+	cmd.Env = append(gitEnv(),
+		"GIT_AUTHOR_NAME=edugit", "GIT_AUTHOR_EMAIL=edugit@localhost",
+		"GIT_COMMITTER_NAME=edugit", "GIT_COMMITTER_EMAIL=edugit@localhost")
+	out, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("commit template tree: %w", err)
+	}
+	if o, err := runGit(ctx, dst, "update-ref", "refs/heads/"+head, strings.TrimSpace(string(out))); err != nil {
+		return fmt.Errorf("set branch: %w: %s", err, o)
+	}
+	return nil
+}
+
 // Delete removes a repository.
 func (r *Repos) Delete(course, name string) error {
 	p, err := r.Path(course, name)

@@ -21,6 +21,13 @@ func TestCan(t *testing.T) {
 		want bool
 	}{
 		{"admin creates course", admin, CourseCreate, Resource{}, true},
+		{"teacher manages assignments", roles(RoleTeacher), AssignmentManage, courseRes, true},
+		{"student cannot manage assignments", roles(RoleStudent), AssignmentManage, courseRes, false},
+		{"admin manages assignments", admin, AssignmentManage, courseRes, true},
+		{"student accepts", roles(RoleStudent), AssignmentAccept, courseRes, true},
+		{"teacher cannot accept", roles(RoleTeacher), AssignmentAccept, courseRes, false},
+		{"admin cannot accept", admin, AssignmentAccept, courseRes, false},
+		{"student of other course cannot accept", Principal{Roles: map[int64]Role{other: RoleStudent}}, AssignmentAccept, courseRes, false},
 		{"course admin cannot create course", roles(RoleCourseAdmin), CourseCreate, Resource{}, false},
 		{"teacher cannot create course", roles(RoleTeacher), CourseCreate, Resource{}, false},
 		{"admin views audit", admin, AuditView, Resource{}, true},

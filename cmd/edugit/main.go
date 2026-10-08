@@ -71,16 +71,17 @@ func run() error {
 			return err
 		}
 		opts = web.Options{
-			Sessions:  sessions,
-			Tokens:    db,
-			Courses:   db,
-			Authz:     authorizer,
-			Repos:     db,
-			Disk:      repos,
-			Audit:     db,
-			Domains:   auth.Domains{Staff: cfg.StaffDomain, Student: cfg.StudentDomain},
-			PublicURL: strings.TrimSuffix(cfg.PublicURL, "/"),
-			LoginURL:  loginURL,
+			Sessions:    sessions,
+			Tokens:      db,
+			Courses:     db,
+			Authz:       authorizer,
+			Repos:       db,
+			Disk:        repos,
+			Assignments: db,
+			Audit:       db,
+			Domains:     auth.Domains{Staff: cfg.StaffDomain, Student: cfg.StudentDomain},
+			PublicURL:   strings.TrimSuffix(cfg.PublicURL, "/"),
+			LoginURL:    loginURL,
 		}
 		go purgeSessions(ctx, db, log)
 	}

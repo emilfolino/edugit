@@ -47,6 +47,34 @@
     </form>
     {{end}}
     {{end}}
+    {{if or .Assignments .CanAssign}}
+    <h2>Assignments</h2>
+    {{if .Assignments}}
+    <ul>
+      {{range .Assignments}}
+      <li><a href="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}">{{.Title}}</a> <span class="meta">{{.Mode}}{{if not .Deadline.IsZero}} · due {{.Deadline.Format "2006-01-02 15:04"}} UTC{{end}}</span></li>
+      {{end}}
+    </ul>
+    {{else}}
+    <p>No assignments yet.</p>
+    {{end}}
+    {{if .CanAssign}}
+    <form method="post" action="/courses/{{.Course.Slug}}/assignments" class="stack">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <label>Short name <input name="slug" required maxlength="40" pattern="[a-z0-9][a-z0-9\-]+"></label>
+      <label>Title <input name="title" required maxlength="120"></label>
+      <label>Template repository
+        <select name="template">{{range .Repos}}{{if eq .Kind "teacher"}}<option>{{.Name}}</option>{{end}}{{end}}</select></label>
+      <label>Mode
+        <select name="mode"><option value="individual">individual</option><option value="team">team</option></select></label>
+      <label>Team size (team mode) <input name="team_size" type="number" min="2" max="20" value="3"></label>
+      <label>History
+        <select name="history"><option value="fresh">fresh (one initial commit)</option><option value="copy">copy (full history)</option></select></label>
+      <label>Deadline (UTC, optional) <input name="deadline" type="datetime-local"></label>
+      <button>Create assignment</button>
+    </form>
+    {{end}}
+    {{end}}
     {{if .CanRoster}}
     <h2>Roster</h2>
     <table>

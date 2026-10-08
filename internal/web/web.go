@@ -46,6 +46,8 @@ type Options struct {
 	// are required together with Courses.
 	Repos RepoStore
 	Disk  RepoDisk
+	// Assignments enables assignments; it needs Repos and Disk.
+	Assignments AssignmentStore
 	// Audit receives security-relevant events and serves the admin viewer;
 	// nil disables both.
 	Audit Auditor
@@ -121,6 +123,9 @@ type page struct {
 	Filter        string
 	Repos         []repoView
 	CanCreateRepo bool
+	Assignments   []store.Assignment
+	CanAssign     bool
+	Asg           *assignmentView
 }
 
 func (s *Server) newPage(r *http.Request, title string) page {

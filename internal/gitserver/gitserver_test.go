@@ -276,3 +276,63 @@ func TestHandler_PushLimits(t *testing.T) {
 		t.Errorf("unexpected push failure output: %s", out)
 	}
 }
+
+func TestRepos_Generate(t *testing.T) {
+	ctx := context.Background()
+	r := newRepos(t)
+	if err := r.Create(ctx, "c1", "tmpl", "main"); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.Generate(ctx, "c1", "tmpl", "empty", true); err == nil {
+		t.Fatal("generating from an empty template succeeded")
+	}
+	if ok, _ := r.Exists("c1", "empty"); ok {
+		t.Error("failed generation left a repo behind")
+	}
+
+	// Seed the template through a work clone, bypassing hooks (file path push
+	// would run them), by fetching into the bare repo directly.
+	work := t.TempDir()
+	git(t, work, "init", "--quiet", "-b", "main")
+	if err := os.WriteFile(filepath.Join(work, "f.txt"), []byte("hi\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	git(t, work, "add", ".")
+	git(t, work, "commit", "-m", "one")
+	git(t, work, "commit", "--allow-empty", "-m", "two")
+	git(t, work, "tag", "v1")
+	src, _ := r.Path("c1", "tmpl")
+	git(t, src, "fetch", "--quiet", work, "+refs/heads/main:refs/heads/main", "+refs/tags/v1:refs/tags/v1")
+
+	for _, tc := range []struct {
+		name    string
+		fresh   bool
+		commits int
+		tag     bool
+	}{
+		{"fresh", true, 1, false},
+		{"copy", false, 2, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if err := r.Generate(ctx, "c1", "tmpl", tc.name, tc.fresh); err != nil {
+				t.Fatal(err)
+			}
+			dst, _ := r.Path("c1", tc.name)
+			if got := strings.Count(git(t, dst, "log", "--format=%h", "main"), "\n"); got != tc.commits {
+				t.Errorf("commits = %d, want %d", got, tc.commits)
+			}
+			if got := git(t, dst, "show", "main:f.txt"); got != "hi\n" {
+				t.Errorf("f.txt = %q", got)
+			}
+			if has := git(t, dst, "tag") != ""; has != tc.tag {
+				t.Errorf("has tag = %v, want %v", has, tc.tag)
+			}
+		})
+	}
+	if err := r.Generate(ctx, "c1", "tmpl", "fresh", true); !errors.Is(err, ErrExists) {
+		t.Errorf("duplicate name error = %v, want ErrExists", err)
+	}
+	if ok, _ := r.Exists("c1", "fresh"); !ok {
+		t.Error("failed duplicate generation removed the existing repo")
+	}
+}

@@ -55,6 +55,9 @@ func (s *Server) routeCourses(mux *http.ServeMux) {
 		mux.HandleFunc("POST /courses/{slug}/repos", s.createRepo)
 		mux.HandleFunc("POST /courses/{slug}/repos/{repo}/template", s.setTemplate)
 	}
+	if s.opts.Repos != nil && s.opts.Disk != nil && s.opts.Assignments != nil {
+		s.routeAssignments(mux)
+	}
 	mux.HandleFunc("GET /join/{token}", s.joinPage)
 	mux.HandleFunc("POST /join/{token}", s.join)
 }
@@ -124,6 +127,14 @@ func (s *Server) renderCourse(w http.ResponseWriter, r *http.Request, u store.Us
 			return
 		}
 		p.CanCreateRepo = s.opts.Disk != nil && !c.Archived && authz.Can(pr, authz.RepoCreate, res)
+	}
+	if s.opts.Assignments != nil && s.opts.Disk != nil {
+		var err error
+		if p.Assignments, err = s.opts.Assignments.CourseAssignments(r.Context(), c.ID); err != nil {
+			s.fail(w, "list assignments", err)
+			return
+		}
+		p.CanAssign = !c.Archived && authz.Can(pr, authz.AssignmentManage, res)
 	}
 	if p.CanRoster {
 		var err error
