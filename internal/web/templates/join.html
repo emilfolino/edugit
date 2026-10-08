@@ -1,8 +1,8 @@
 {{template "head" .}}
-    <h1>Join {{.Course.Title}}</h1>
-    <p>You have been invited to join this course as a student.</p>
+    <h1>{{$.L.T "join.title" .Course.Title}}</h1>
+    <p>{{$.L.T "join.invited"}}</p>
     <form method="post" action="/join/{{.Link}}">
       <input type="hidden" name="csrf" value="{{.CSRF}}">
-      <button>Join course</button>
+      <button>{{$.L.T "join.button"}}</button>
     </form>
 {{template "foot" .}}

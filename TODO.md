@@ -62,7 +62,7 @@ Numbered backlog for edugit. Reference items by number. Mark done with `[x]`.
 
 ## Follow-ups
 
-29. [ ] **Translate remaining templates.** Pulls, issues, course, edit and grading templates use English literals; move them to the en/sv catalogs (parity test already enforces both).
+29. [x] **Translate remaining templates.** *(done: every template uses the en/sv catalogs; `Lang.Value` translates stored roles, states and statuses with a fallback to the raw value. Remaining English: error/flash messages generated in Go handlers, and issue/PR user content.)* Parity test enforces both catalogs.
 30. [x] **Handler tests for browse, site, CI and grading routes** (`cmd/edugit/routes_test.go`: a visitor matrix over the full wiring plus traversal checks). Cover authz (404/403), happy paths and error cases; extends #23.
 31. [x] **Test: editor-only courses reject CLI pushes.** Git smart-HTTP handler test with `commit_methods=editor` (students refused, staff exempt); extends #28.
 32. [x] **Store tests for sites.** `store/sites.go`: set, replace, clear, one site per course.

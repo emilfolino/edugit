@@ -2,44 +2,44 @@
     {{with .Issue}}
     {{$i := .Issue}}
     <h1>#{{$i.Number}} {{$i.Title}}</h1>
-    <p class="meta"><a href="{{.Base}}">Issues</a> · {{$i.State}} · {{$i.Author}}</p>
+    <p class="meta"><a href="{{.Base}}">{{$.L.T "browse.issues"}}</a> · {{$.L.Value "state" $i.State}} · {{$i.Author}}</p>
     {{if $.Error}}<p class="error" role="alert">{{$.Error}}</p>{{end}}
     {{if $i.Body}}<pre class="body">{{$i.Body}}</pre>{{end}}
-    <p>Labels: {{range $i.Labels}}<code>{{.}}</code> {{else}}none{{end}}<br>
-       Assignees: {{range $i.Assignees}}{{.}} {{else}}none{{end}}<br>
-       Milestone: {{if $i.Milestone}}{{$i.Milestone}}{{else}}none{{end}}</p>
+    <p>{{$.L.T "common.labels"}}: {{range $i.Labels}}<code>{{.}}</code> {{else}}{{$.L.T "common.none"}}{{end}}<br>
+       {{$.L.T "issue.assignees"}}: {{range $i.Assignees}}{{.}} {{else}}{{$.L.T "common.none"}}{{end}}<br>
+       {{$.L.T "common.milestone"}}: {{if $i.Milestone}}{{$i.Milestone}}{{else}}{{$.L.T "common.none"}}{{end}}</p>
     {{if .CanManage}}
     <form method="post" class="inline" action="{{.Base}}/{{$i.Number}}/meta">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <input name="value" placeholder="label, username or milestone" required>
-      <button name="op" value="label">Add label</button>
-      <button name="op" value="unlabel">Remove label</button>
-      <button name="op" value="assign">Assign</button>
-      <button name="op" value="unassign">Unassign</button>
+      <input name="value" placeholder="{{$.L.T "issue.metaph"}}" required>
+      <button name="op" value="label">{{$.L.T "issue.addlabel"}}</button>
+      <button name="op" value="unlabel">{{$.L.T "issue.removelabel"}}</button>
+      <button name="op" value="assign">{{$.L.T "issue.assign"}}</button>
+      <button name="op" value="unassign">{{$.L.T "issue.unassign"}}</button>
     </form>
     <form method="post" class="inline" action="{{.Base}}/{{$i.Number}}/meta">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
       <input type="hidden" name="op" value="milestone">
-      <label>Milestone <select name="value"><option value="">none</option>{{range .Milestones}}<option{{if eq .Title $i.Milestone}} selected{{end}}>{{.Title}}</option>{{end}}</select></label>
-      <button>Set</button>
+      <label>{{$.L.T "common.milestone"}} <select name="value"><option value="">{{$.L.T "common.none"}}</option>{{range .Milestones}}<option{{if eq .Title $i.Milestone}} selected{{end}}>{{.Title}}</option>{{end}}</select></label>
+      <button>{{$.L.T "issue.set"}}</button>
     </form>
     {{end}}
-    <h2>Discussion</h2>
+    <h2>{{$.L.T "issue.discussion"}}</h2>
     {{range .Comments}}
     <div class="comment"><p class="meta">{{.Author}}</p><pre class="body">{{.Body}}</pre></div>
-    {{else}}<p>No comments yet.</p>{{end}}
+    {{else}}<p>{{$.L.T "issue.nocomments"}}</p>{{end}}
     {{if .CanIssue}}
     <form method="post" class="stack" action="{{.Base}}/{{$i.Number}}/comment">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <label>Comment <textarea name="body" rows="4" required></textarea></label>
-      <button>Comment</button>
+      <label>{{$.L.T "common.comment"}} <textarea name="body" rows="4" required></textarea></label>
+      <button>{{$.L.T "common.comment"}}</button>
     </form>
     {{end}}
     {{if .CanState}}
     <form method="post" action="{{.Base}}/{{$i.Number}}/state">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      {{if eq $i.State "open"}}<button name="state" value="closed">Close issue</button>
-      {{else}}<button name="state" value="open">Reopen issue</button>{{end}}
+      {{if eq $i.State "open"}}<button name="state" value="closed">{{$.L.T "issue.close"}}</button>
+      {{else}}<button name="state" value="open">{{$.L.T "issue.reopen"}}</button>{{end}}
     </form>
     {{end}}
     {{end}}

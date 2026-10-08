@@ -1,6 +1,6 @@
 {{template "head" .}}
     <h1>{{.Course.Title}}</h1>
-    <p class="meta">{{.Course.Slug}}{{if .Course.Term}} · {{.Course.Term}}{{end}}{{if .Course.Archived}} · archived{{end}}</p>
+    <p class="meta">{{.Course.Slug}}{{if .Course.Term}} · {{.Course.Term}}{{end}}{{if .Course.Archived}} · {{$.L.T "courses.archived"}}{{end}}</p>
     {{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
     {{if .Notice}}<p class="notice" role="status">{{.Notice}}</p>{{end}}
     {{if .Skipped}}<ul class="skipped">{{range .Skipped}}<li>{{.}}</li>{{end}}</ul>{{end}}
@@ -8,45 +8,45 @@
     <form method="post" action="/courses/{{.Course.Slug}}/archive">
       <input type="hidden" name="csrf" value="{{.CSRF}}">
       <input type="hidden" name="archived" value="{{if .Course.Archived}}0{{else}}1{{end}}">
-      <button>{{if .Course.Archived}}Restore course{{else}}Archive course{{end}}</button>
+      <button>{{if .Course.Archived}}{{$.L.T "course.restore"}}{{else}}{{$.L.T "course.archive"}}{{end}}</button>
     </form>
     <form method="post" action="/courses/{{.Course.Slug}}/commit-methods">
       <input type="hidden" name="csrf" value="{{.CSRF}}">
-      <label>Students commit with
+      <label>{{$.L.T "course.commitwith"}}
         <select name="methods">
-          <option value="both"{{if or (eq .Course.CommitMethods "both") (eq .Course.CommitMethods "")}} selected{{end}}>git CLI or browser editor</option>
-          <option value="cli"{{if eq .Course.CommitMethods "cli"}} selected{{end}}>git CLI only</option>
-          <option value="editor"{{if eq .Course.CommitMethods "editor"}} selected{{end}}>browser editor only</option>
+          <option value="both"{{if or (eq .Course.CommitMethods "both") (eq .Course.CommitMethods "")}} selected{{end}}>{{$.L.T "course.m.both"}}</option>
+          <option value="cli"{{if eq .Course.CommitMethods "cli"}} selected{{end}}>{{$.L.T "course.m.cli"}}</option>
+          <option value="editor"{{if eq .Course.CommitMethods "editor"}} selected{{end}}>{{$.L.T "course.m.editor"}}</option>
         </select>
       </label>
-      <button>Save</button>
+      <button>{{$.L.T "common.save"}}</button>
     </form>
     <form method="post" action="/courses/{{.Course.Slug}}/site">
       <input type="hidden" name="csrf" value="{{.CSRF}}">
-      <label>Site from teacher repo <input name="repo" value="{{with .Site}}{{.Repo}}{{end}}" placeholder="empty = no site"></label>
-      <label>Branch <input name="branch" value="{{with .Site}}{{.Branch}}{{else}}main{{end}}"></label>
-      <label>Directory <input name="dir" value="{{with .Site}}{{.Dir}}{{end}}" placeholder="repo root"></label>
-      <button>Publish</button>
+      <label>{{$.L.T "course.siterepo"}} <input name="repo" value="{{with .Site}}{{.Repo}}{{end}}" placeholder="{{$.L.T "course.nosite"}}"></label>
+      <label>{{$.L.T "common.branch"}} <input name="branch" value="{{with .Site}}{{.Branch}}{{else}}main{{end}}"></label>
+      <label>{{$.L.T "course.dir"}} <input name="dir" value="{{with .Site}}{{.Dir}}{{end}}" placeholder="{{$.L.T "course.reporoot"}}"></label>
+      <button>{{$.L.T "course.publish"}}</button>
     </form>
     {{end}}
-    {{if .Site}}<p><a href="/sites/{{.Course.Slug}}/">Course site</a></p>{{end}}
+    {{if .Site}}<p><a href="/sites/{{.Course.Slug}}/">{{$.L.T "course.site"}}</a></p>{{end}}
     {{if or .Repos .CanCreateRepo}}
-    <h2>Repositories</h2>
+    <h2>{{$.L.T "common.repositories"}}</h2>
     {{if .Repos}}
     <table>
-      <thead><tr><th>Name</th><th>Kind</th><th>Clone URL</th><th></th></tr></thead>
+      <thead><tr><th>{{$.L.T "common.name"}}</th><th>{{$.L.T "course.kind"}}</th><th>{{$.L.T "course.cloneurl"}}</th><th></th></tr></thead>
       <tbody>
       {{range .Repos}}
       <tr>
-        <td><a href="/courses/{{$.Course.Slug}}/repos/{{.Name}}/tree">{{.Name}}</a>{{if .Archived}} <span class="meta">archived</span>{{end}}</td>
-        <td>{{.Kind}}{{if .IsTemplate}} · template{{end}}</td>
+        <td><a href="/courses/{{$.Course.Slug}}/repos/{{.Name}}/tree">{{.Name}}</a>{{if .Archived}} <span class="meta">{{$.L.T "courses.archived"}}</span>{{end}}</td>
+        <td>{{$.L.Value "kind" .Kind}}{{if .IsTemplate}} · {{$.L.T "course.template"}}{{end}}</td>
         <td><code>{{.CloneURL}}</code></td>
         <td>
           {{if .CanAdmin}}
           <form method="post" action="/courses/{{$.Course.Slug}}/repos/{{.Name}}/template" class="inline">
             <input type="hidden" name="csrf" value="{{$.CSRF}}">
             <input type="hidden" name="template" value="{{if .IsTemplate}}0{{else}}1{{end}}">
-            <button>{{if .IsTemplate}}Unmark template{{else}}Mark as template{{end}}</button>
+            <button>{{if .IsTemplate}}{{$.L.T "course.unmark"}}{{else}}{{$.L.T "course.mark"}}{{end}}</button>
           </form>
           {{end}}
         </td>
@@ -55,73 +55,73 @@
       </tbody>
     </table>
     {{else}}
-    <p>No repositories yet.</p>
+    <p>{{$.L.T "common.norepos"}}</p>
     {{end}}
     {{if .CanCreateRepo}}
     <form method="post" action="/courses/{{.Course.Slug}}/repos" class="stack">
       <input type="hidden" name="csrf" value="{{.CSRF}}">
-      <label>Name <input name="name" required maxlength="100" pattern="[a-z0-9][a-z0-9._\-]*"></label>
-      <label><input type="checkbox" name="template" value="1"> Template (visible to students, source for assignments)</label>
-      <button>Create repository</button>
+      <label>{{$.L.T "common.name"}} <input name="name" required maxlength="100" pattern="[a-z0-9][a-z0-9._\-]*"></label>
+      <label><input type="checkbox" name="template" value="1"> {{$.L.T "course.templatelabel"}}</label>
+      <button>{{$.L.T "course.createrepo"}}</button>
     </form>
     {{end}}
     {{end}}
     {{if or .Assignments .CanAssign}}
-    <h2>Assignments</h2>
+    <h2>{{$.L.T "course.assignments"}}</h2>
     {{if .Assignments}}
     <ul>
       {{range .Assignments}}
-      <li><a href="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}">{{.Title}}</a> <span class="meta">{{.Mode}}{{if not .Deadline.IsZero}} · due {{.Deadline.Format "2006-01-02 15:04"}} UTC{{end}}</span></li>
+      <li><a href="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}">{{.Title}}</a> <span class="meta">{{$.L.Value "mode" .Mode}}{{if not .Deadline.IsZero}} · {{$.L.T "asg.due" (.Deadline.Format "2006-01-02 15:04")}}{{end}}</span></li>
       {{end}}
     </ul>
     {{else}}
-    <p>No assignments yet.</p>
+    <p>{{$.L.T "course.noasg"}}</p>
     {{end}}
     {{if .CanAssign}}
     <form method="post" action="/courses/{{.Course.Slug}}/assignments" class="stack">
       <input type="hidden" name="csrf" value="{{.CSRF}}">
-      <label>Short name <input name="slug" required maxlength="40" pattern="[a-z0-9][a-z0-9\-]+"></label>
-      <label>Title <input name="title" required maxlength="120"></label>
-      <label>Template repository
+      <label>{{$.L.T "courses.slug"}} <input name="slug" required maxlength="40" pattern="[a-z0-9][a-z0-9\-]+"></label>
+      <label>{{$.L.T "common.title"}} <input name="title" required maxlength="120"></label>
+      <label>{{$.L.T "course.templaterepo"}}
         <select name="template">{{range .Repos}}{{if eq .Kind "teacher"}}<option>{{.Name}}</option>{{end}}{{end}}</select></label>
-      <label>Mode
-        <select name="mode"><option value="individual">individual</option><option value="team">team</option></select></label>
-      <label>Team size (team mode) <input name="team_size" type="number" min="2" max="20" value="3"></label>
-      <label>History
-        <select name="history"><option value="fresh">fresh (one initial commit)</option><option value="copy">copy (full history)</option></select></label>
-      <label>Deadline (UTC, optional) <input name="deadline" type="datetime-local"></label>
-      <button>Create assignment</button>
+      <label>{{$.L.T "course.mode"}}
+        <select name="mode"><option value="individual">{{$.L.Value "mode" "individual"}}</option><option value="team">{{$.L.Value "mode" "team"}}</option></select></label>
+      <label>{{$.L.T "course.teamsize"}} <input name="team_size" type="number" min="2" max="20" value="3"></label>
+      <label>{{$.L.T "course.history"}}
+        <select name="history"><option value="fresh">{{$.L.T "course.h.fresh"}}</option><option value="copy">{{$.L.T "course.h.copy"}}</option></select></label>
+      <label>{{$.L.T "course.deadline"}} <input name="deadline" type="datetime-local"></label>
+      <button>{{$.L.T "course.createasg"}}</button>
     </form>
     {{end}}
     {{end}}
     {{if .CanRoster}}
-    <h2>Roster</h2>
+    <h2>{{$.L.T "course.roster"}}</h2>
     <table>
-      <thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead>
+      <thead><tr><th>{{$.L.T "common.name"}}</th><th>{{$.L.T "common.email"}}</th><th>{{$.L.T "common.role"}}</th><th></th></tr></thead>
       <tbody>
       {{range .Roster}}
       <tr>
-        <td>{{if .Pending}}<em>not signed in yet</em>{{else}}{{.DisplayName}}{{end}}</td>
+        <td>{{if .Pending}}<em>{{$.L.T "course.notsignedin"}}</em>{{else}}{{.DisplayName}}{{end}}</td>
         <td>{{.Email}}</td>
-        <td>{{.Role}}</td>
+        <td>{{$.L.Value "role" .Role}}</td>
         <td>
           {{if not $.Course.Archived}}
           <form method="post" action="/courses/{{$.Course.Slug}}/role" class="inline">
             <input type="hidden" name="csrf" value="{{$.CSRF}}">
             <input type="hidden" name="email" value="{{.Email}}">
-            <select name="role" aria-label="Role for {{.Email}}">
-              <option value="student"{{if eq .Role "student"}} selected{{end}}>student</option>
+            <select name="role" aria-label="{{$.L.T "course.rolefor" .Email}}">
+              <option value="student"{{if eq .Role "student"}} selected{{end}}>{{$.L.T "role.student"}}</option>
               {{if $.CanManage}}
-              <option value="teacher"{{if eq .Role "teacher"}} selected{{end}}>teacher</option>
-              <option value="course_admin"{{if eq .Role "course_admin"}} selected{{end}}>course_admin</option>
+              <option value="teacher"{{if eq .Role "teacher"}} selected{{end}}>{{$.L.T "role.teacher"}}</option>
+              <option value="course_admin"{{if eq .Role "course_admin"}} selected{{end}}>{{$.L.T "role.course_admin"}}</option>
               {{end}}
             </select>
-            <button>set</button>
+            <button>{{$.L.T "course.set"}}</button>
           </form>
           <form method="post" action="/courses/{{$.Course.Slug}}/remove" class="inline">
             <input type="hidden" name="csrf" value="{{$.CSRF}}">
             <input type="hidden" name="email" value="{{.Email}}">
-            <button>remove</button>
+            <button>{{$.L.T "course.remove"}}</button>
           </form>
           {{end}}
         </td>
@@ -130,33 +130,33 @@
       </tbody>
     </table>
     {{if not .Course.Archived}}
-    <h2>Enrol</h2>
+    <h2>{{$.L.T "course.enrol"}}</h2>
     <form method="post" action="/courses/{{.Course.Slug}}/enroll" class="stack">
       <input type="hidden" name="csrf" value="{{.CSRF}}">
-      <label>Emails, one per line (CSV with an optional role column works)
+      <label>{{$.L.T "course.emails"}}
         <textarea name="emails" rows="6" required></textarea></label>
-      <label>Default role
+      <label>{{$.L.T "course.defaultrole"}}
         <select name="role">
-          <option value="student">student</option>
-          {{if .CanManage}}<option value="teacher">teacher</option><option value="course_admin">course_admin</option>{{end}}
+          <option value="student">{{$.L.T "role.student"}}</option>
+          {{if .CanManage}}<option value="teacher">{{$.L.T "role.teacher"}}</option><option value="course_admin">{{$.L.T "role.course_admin"}}</option>{{end}}
         </select></label>
-      <button>Enrol</button>
+      <button>{{$.L.T "course.enrol"}}</button>
     </form>
-    <h2>Invite link</h2>
+    <h2>{{$.L.T "course.invite"}}</h2>
     {{if .Link}}
-    <p>Share this link with students. It is shown only once:</p>
+    <p>{{$.L.T "course.sharelink"}}</p>
     <p><code>{{.Link}}</code></p>
     {{else if not .InviteExpires.IsZero}}
-    <p>A link is active until {{.InviteExpires.Format "2006-01-02"}}.</p>
+    <p>{{$.L.T "course.linkactive" (.InviteExpires.Format "2006-01-02")}}</p>
     {{end}}
     <form method="post" action="/courses/{{.Course.Slug}}/invite" class="inline">
       <input type="hidden" name="csrf" value="{{.CSRF}}">
-      <button>{{if .InviteExpires.IsZero}}Create link{{else}}Replace link{{end}}</button>
+      <button>{{if .InviteExpires.IsZero}}{{$.L.T "course.createlink"}}{{else}}{{$.L.T "course.replacelink"}}{{end}}</button>
     </form>
     {{if not .InviteExpires.IsZero}}
     <form data-confirm="{{.L.T "confirm.revoke"}}" method="post" action="/courses/{{.Course.Slug}}/invite/revoke" class="inline">
       <input type="hidden" name="csrf" value="{{.CSRF}}">
-      <button>Revoke</button>
+      <button>{{$.L.T "common.revoke"}}</button>
     </form>
     {{end}}
     {{end}}

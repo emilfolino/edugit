@@ -1,44 +1,44 @@
 {{template "head" .}}
     {{with .Pulls}}
-    <h1>Pull requests</h1>
+    <h1>{{$.L.T "browse.pulls"}}</h1>
     <p class="meta"><a href="/courses/{{$.Course.Slug}}">{{$.Course.Title}}</a> · {{.Repo}}</p>
     {{if $.Error}}<p class="error" role="alert">{{$.Error}}</p>{{end}}
     {{if .Pulls}}
     <table>
-      <thead><tr><th>#</th><th>Title</th><th>Branches</th><th>State</th></tr></thead>
+      <thead><tr><th>#</th><th>{{$.L.T "common.title"}}</th><th>{{$.L.T "pulls.branches"}}</th><th>{{$.L.T "common.state"}}</th></tr></thead>
       <tbody>
       {{range .Pulls}}
-      <tr><td>{{.Number}}</td><td><a href="/courses/{{$.Course.Slug}}/repos/{{$.Pulls.Repo}}/pulls/{{.Number}}">{{.Title}}</a></td><td><code>{{.Head}}</code> → <code>{{.Base}}</code></td><td>{{.State}}</td></tr>
+      <tr><td>{{.Number}}</td><td><a href="/courses/{{$.Course.Slug}}/repos/{{$.Pulls.Repo}}/pulls/{{.Number}}">{{.Title}}</a></td><td><code>{{.Head}}</code> → <code>{{.Base}}</code></td><td>{{$.L.Value "state" .State}}</td></tr>
       {{end}}
       </tbody>
     </table>
-    {{else}}<p>No pull requests yet.</p>{{end}}
+    {{else}}<p>{{$.L.T "pulls.none"}}</p>{{end}}
     {{if .CanWrite}}
-    <h2>New pull request</h2>
+    <h2>{{$.L.T "pulls.new"}}</h2>
     <form method="post" class="stack" action="/courses/{{$.Course.Slug}}/repos/{{.Repo}}/pulls">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <label>Head branch <input name="head" required></label>
-      <label>Base branch <input name="base" value="main" required></label>
-      <label>Title <input name="title" maxlength="200" required></label>
-      <label>Description <textarea name="body" rows="4"></textarea></label>
-      <button>Open pull request</button>
+      <label>{{$.L.T "pulls.head"}} <input name="head" required></label>
+      <label>{{$.L.T "pulls.base"}} <input name="base" value="main" required></label>
+      <label>{{$.L.T "common.title"}} <input name="title" maxlength="200" required></label>
+      <label>{{$.L.T "common.description"}} <textarea name="body" rows="4"></textarea></label>
+      <button>{{$.L.T "pulls.open"}}</button>
     </form>
     {{end}}
     {{if .CanFeedback}}
-    <h2>Feedback</h2>
+    <h2>{{$.L.T "grading.feedback"}}</h2>
     <form method="post" action="/courses/{{$.Course.Slug}}/repos/{{.Repo}}/pulls/feedback">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <button>Open feedback pull request</button>
+      <button>{{$.L.T "pulls.feedback"}}</button>
     </form>
     {{end}}
     {{if .CanProtect}}
-    <h2>Required approvals</h2>
+    <h2>{{$.L.T "pulls.required"}}</h2>
     <form method="post" class="stack" action="/courses/{{$.Course.Slug}}/repos/{{.Repo}}/protection">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <label>Branch pattern <input name="pattern" value="main" required></label>
-      <label>Approvals needed to merge <input name="approvals" type="number" min="0" max="10" value="1" required></label>
-      <label><input name="checks" type="checkbox" value="1"> Require passing CI checks (the repository must define jobs)</label>
-      <button>Save</button>
+      <label>{{$.L.T "pulls.pattern"}} <input name="pattern" value="main" required></label>
+      <label>{{$.L.T "pulls.needed"}} <input name="approvals" type="number" min="0" max="10" value="1" required></label>
+      <label><input name="checks" type="checkbox" value="1"> {{$.L.T "pulls.requirechecks"}}</label>
+      <button>{{$.L.T "common.save"}}</button>
     </form>
     {{end}}
     {{end}}

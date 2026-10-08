@@ -53,3 +53,12 @@ func TestT(t *testing.T) {
 		t.Errorf("fallback = %q", got)
 	}
 }
+
+func TestValue(t *testing.T) {
+	if got := Swedish.Value("role", "teacher"); got != "lärare" {
+		t.Errorf("sv = %q", got)
+	}
+	if got := Swedish.Value("role", "unknown"); got != "unknown" {
+		t.Errorf("fallback = %q", got)
+	}
+}

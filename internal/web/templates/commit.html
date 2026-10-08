@@ -5,7 +5,7 @@
     <p class="meta"><code>{{.Commit.SHA}}</code> · {{.Commit.Author}} · {{.Commit.When.Format "2006-01-02 15:04"}}</p>
     {{range .Files}}
     <section class="diff-file">
-      <h3><code>{{.Path}}</code> <span class="meta">{{.Status}}{{if .Binary}} · binary{{else}} · +{{.Added}} −{{.Removed}}{{end}}</span></h3>
+      <h3><code>{{.Path}}</code> <span class="meta">{{$.L.Value "filestatus" .Status}}{{if .Binary}} · {{$.L.T "common.binary"}}{{else}} · +{{.Added}} −{{.Removed}}{{end}}</span></h3>
       {{range .Hunks}}
       <table class="diff"><tbody>
         <tr class="hunk"><td colspan="3"><code>{{.Header}}</code></td></tr>

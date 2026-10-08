@@ -1,11 +1,11 @@
 {{template "head" .}}
-    <h1>Audit log</h1>
+    <h1>{{$.L.T "audit.title"}}</h1>
     <form method="get" class="inline">
-      <label>Action <input name="action" value="{{.Filter}}" placeholder="e.g. roster.role"></label>
-      <button>filter</button>
+      <label>{{$.L.T "audit.action"}} <input name="action" value="{{.Filter}}" placeholder="e.g. roster.role"></label>
+      <button>{{$.L.T "audit.filter"}}</button>
     </form>
     <table>
-      <thead><tr><th>Time (UTC)</th><th>Actor</th><th>Action</th><th>Target</th><th>Detail</th></tr></thead>
+      <thead><tr><th>{{$.L.T "audit.time"}}</th><th>{{$.L.T "audit.actor"}}</th><th>{{$.L.T "audit.action"}}</th><th>{{$.L.T "audit.target"}}</th><th>{{$.L.T "audit.detail"}}</th></tr></thead>
       <tbody>
       {{range .Entries}}
         <tr>
@@ -16,9 +16,9 @@
           <td>{{.Detail}}</td>
         </tr>
       {{else}}
-        <tr><td colspan="5">No entries.</td></tr>
+        <tr><td colspan="5">{{$.L.T "audit.none"}}</td></tr>
       {{end}}
       </tbody>
     </table>
-    {{if .Next}}<p><a href="/admin/audit?before={{.Next}}{{if .Filter}}&amp;action={{.Filter}}{{end}}">older</a></p>{{end}}
+    {{if .Next}}<p><a href="/admin/audit?before={{.Next}}{{if .Filter}}&amp;action={{.Filter}}{{end}}">{{$.L.T "audit.older"}}</a></p>{{end}}
 {{template "foot" .}}

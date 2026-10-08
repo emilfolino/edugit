@@ -1,19 +1,19 @@
 {{template "head" .}}
     {{with .CI}}
-    <h1>Checks</h1>
+    <h1>{{$.L.T "browse.ci"}}</h1>
     <p class="meta"><a href="/courses/{{$.Course.Slug}}">{{$.Course.Title}}</a> · {{.Repo}} ·
       <a href="{{.Base}}/../tree">{{$.L.T "browse.code"}}</a> · <a href="{{.Base}}">{{$.L.T "browse.ci"}}</a></p>
     {{if .Run}}
-    <h2>{{.Run.Job}}: {{.Run.Status}}</h2>
+    <h2>{{.Run.Job}}: {{$.L.Value "cistatus" .Run.Status}}</h2>
     <p class="meta"><code>{{.Run.Branch}}</code> @ <code>{{.Run.SHA}}</code></p>
     <pre>{{.Run.Log}}</pre>
     {{else if .Runs}}
     <table>
-      <thead><tr><th>Job</th><th>Branch</th><th>Commit</th><th>Status</th></tr></thead>
+      <thead><tr><th>{{$.L.T "common.job"}}</th><th>{{$.L.T "common.branch"}}</th><th>{{$.L.T "common.commit"}}</th><th>{{$.L.T "common.state"}}</th></tr></thead>
       <tbody>{{range .Runs}}
-      <tr><td><a href="{{$.CI.Base}}/{{.ID}}">{{.Job}}</a></td><td>{{.Branch}}</td><td><code>{{slice .SHA 0 7}}</code></td><td>{{.Status}}</td></tr>
+      <tr><td><a href="{{$.CI.Base}}/{{.ID}}">{{.Job}}</a></td><td>{{.Branch}}</td><td><code>{{slice .SHA 0 7}}</code></td><td>{{$.L.Value "cistatus" .Status}}</td></tr>
       {{end}}</tbody>
     </table>
-    {{else}}<p>No checks have run. Add <code>.edugit/ci.json</code> to the repository to define jobs.</p>{{end}}
+    {{else}}<p>{{$.L.T "ci.none1"}} <code>.edugit/ci.json</code> {{$.L.T "ci.none2"}}</p>{{end}}
     {{end}}
 {{template "foot"}}

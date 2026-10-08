@@ -1,19 +1,19 @@
 {{template "head" .}}
     {{with .Asg}}
     <h1>{{.Title}}</h1>
-    <p class="meta"><a href="/courses/{{$.Course.Slug}}">{{$.Course.Title}}</a> · {{.Mode}}{{if eq .Mode "team"}} (up to {{.TeamSize}}){{end}} · template {{.TemplateName}} · {{.History}} history{{if not .Deadline.IsZero}} · due {{.Deadline.Format "2006-01-02 15:04"}} UTC{{end}}</p>
+    <p class="meta"><a href="/courses/{{$.Course.Slug}}">{{$.Course.Title}}</a> · {{$.L.Value "mode" .Mode}}{{if eq .Mode "team"}} ({{$.L.T "asg.upto" .TeamSize}}){{end}} · {{$.L.T "asg.template" .TemplateName}} · {{$.L.T "asg.history" .History}}{{if not .Deadline.IsZero}} · {{$.L.T "asg.due" (.Deadline.Format "2006-01-02 15:04")}}{{end}}</p>
     {{if $.Error}}<p class="error" role="alert">{{$.Error}}</p>{{end}}
     {{if $.Notice}}<p class="notice" role="status">{{$.Notice}}</p>{{end}}
-    {{if $.Skipped}}<p>Failed for:</p><ul class="skipped">{{range $.Skipped}}<li>{{.}}</li>{{end}}</ul>{{end}}
+    {{if $.Skipped}}<p>{{$.L.T "asg.failed"}}</p><ul class="skipped">{{range $.Skipped}}<li>{{.}}</li>{{end}}</ul>{{end}}
     {{if .CanAccept}}
-    {{if not .Deadline.IsZero}}<p>Your deadline: {{.Effective.Format "2006-01-02 15:04"}} UTC{{if not .Open}} (closed){{end}}</p>{{end}}
+    {{if not .Deadline.IsZero}}<p>{{$.L.T "asg.yourdeadline" (.Effective.Format "2006-01-02 15:04")}}{{if not .Open}} ({{$.L.T "asg.closedflag"}}){{end}}</p>{{end}}
     {{if .Own}}
-    <h2>Your repository</h2>
-    <p>{{.Own.Name}}{{if .Own.Archived}} <span class="meta">locked: the deadline has passed</span>{{end}}</p>
+    <h2>{{$.L.T "asg.yourrepo"}}</h2>
+    <p>{{.Own.Name}}{{if .Own.Archived}} <span class="meta">{{$.L.T "asg.lockedpassed"}}</span>{{end}}</p>
     <p><code>git clone {{.Own.CloneURL}}</code></p>
     {{with .Grade}}
-    <h2>Your grade</h2>
-    <p>{{.Total}} / {{.Max}} points</p>
+    <h2>{{$.L.T "asg.yourgrade"}}</h2>
+    <p>{{$.L.T "asg.points" .Total .Max}}</p>
     <table>
       <tbody>{{$g := .}}{{range .Rubric}}<tr><td>{{.Title}}</td><td>{{index $g.Scores .ID}} / {{.MaxPoints}}</td></tr>{{end}}</tbody>
     </table>
@@ -23,17 +23,17 @@
     {{if .Open}}
     <form method="post" action="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}/accept">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <button>Accept assignment</button>
+      <button>{{$.L.T "asg.accept"}}</button>
     </form>
-    {{else}}<p>This assignment is closed.</p>{{end}}
+    {{else}}<p>{{$.L.T "asg.isclosed"}}</p>{{end}}
     {{end}}
     {{if eq .Mode "team"}}
-    <h2>Teams</h2>
+    <h2>{{$.L.T "asg.teams"}}</h2>
     {{if .Own}}
     {{if .Open}}
     <form method="post" action="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}/teams/leave" class="inline">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <button>Leave team</button>
+      <button>{{$.L.T "asg.leave"}}</button>
     </form>
     {{end}}
     {{end}}
@@ -42,7 +42,7 @@
     {{if eq .Mode "team"}}
     {{if .Teams}}
     <table>
-      <thead><tr><th>Team</th><th>Members</th><th>Repository</th><th></th></tr></thead>
+      <thead><tr><th>{{$.L.T "asg.team"}}</th><th>{{$.L.T "asg.members"}}</th><th>{{$.L.T "common.repository"}}</th><th></th></tr></thead>
       <tbody>
       {{range .Teams}}
       <tr>
@@ -53,7 +53,7 @@
           {{if and $.Asg.CanAccept $.Asg.Open (not $.Asg.InTeam)}}
           <form method="post" action="/courses/{{$.Course.Slug}}/assignments/{{$.Asg.Slug}}/teams/{{.ID}}/join" class="inline">
             <input type="hidden" name="csrf" value="{{$.CSRF}}">
-            <button>Join</button>
+            <button>{{$.L.T "asg.join"}}</button>
           </form>
           {{end}}
         </td>
@@ -61,45 +61,45 @@
       {{end}}
       </tbody>
     </table>
-    {{else}}<p>No teams yet.</p>{{end}}
+    {{else}}<p>{{$.L.T "asg.noteams"}}</p>{{end}}
     {{if and .CanAccept .Open (not .InTeam)}}
     <form method="post" action="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}/teams" class="stack">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <label>New team name <input name="name" required maxlength="40" pattern="[a-z0-9][a-z0-9\-]*"></label>
-      <button>Create team</button>
+      <label>{{$.L.T "asg.newteam"}} <input name="name" required maxlength="40" pattern="[a-z0-9][a-z0-9\-]*"></label>
+      <button>{{$.L.T "asg.createteam"}}</button>
     </form>
     {{end}}
     {{end}}
     {{if .CanManage}}
-    <h2>Repositories</h2>
+    <h2>{{$.L.T "common.repositories"}}</h2>
     {{if .Repos}}
     <table>
-      <thead><tr><th>Repository</th><th>Owner</th><th></th></tr></thead>
-      <tbody>{{range .Repos}}<tr><td>{{.Name}}{{if .Archived}} <span class="meta">locked</span>{{end}}</td><td>{{.Owner}}</td>
+      <thead><tr><th>{{$.L.T "common.repository"}}</th><th>{{$.L.T "common.owner"}}</th><th></th></tr></thead>
+      <tbody>{{range .Repos}}<tr><td>{{.Name}}{{if .Archived}} <span class="meta">{{$.L.T "common.locked"}}</span>{{end}}</td><td>{{.Owner}}</td>
         <td>
           <form data-confirm="{{$.L.T "confirm.reset"}}" method="post" action="/courses/{{$.Course.Slug}}/assignments/{{$.Asg.Slug}}/reset" class="inline">
             <input type="hidden" name="csrf" value="{{$.CSRF}}">
             <input type="hidden" name="repo" value="{{.Name}}">
-            <input name="confirm" placeholder="type name to reset" aria-label="Confirm reset of {{.Name}}" size="24">
-            <button>Reset</button>
+            <input name="confirm" placeholder="{{$.L.T "asg.resetph"}}" aria-label="{{$.L.T "asg.resetlabel" .Name}}" size="24">
+            <button>{{$.L.T "asg.reset"}}</button>
           </form>
         </td></tr>{{end}}</tbody>
     </table>
-    {{else}}<p>No repositories yet.</p>{{end}}
-    <p><a href="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}/grading">Rubric and grading</a> ·
-      <a href="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}/grades.csv">Export grades (CSV)</a></p>
+    {{else}}<p>{{$.L.T "common.norepos"}}</p>{{end}}
+    <p><a href="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}/grading">{{$.L.T "asg.rubricgrading"}}</a> ·
+      <a href="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}/grades.csv">{{$.L.T "common.exportcsv"}}</a></p>
     {{if eq .Mode "individual"}}
     <form method="post" action="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}/generate" class="inline">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <button>Generate for {{.Pending}} students without one</button>
+      <button>{{$.L.T "asg.generate" .Pending}}</button>
     </form>
     {{end}}
-    <h2>Extension</h2>
+    <h2>{{$.L.T "asg.extension"}}</h2>
     <form method="post" action="/courses/{{$.Course.Slug}}/assignments/{{.Slug}}/extend" class="stack">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <label>Student email <input name="email" type="email" required></label>
-      <label>New deadline (UTC; empty removes) <input name="deadline" type="datetime-local"></label>
-      <button>Set extension</button>
+      <label>{{$.L.T "asg.studentemail"}} <input name="email" type="email" required></label>
+      <label>{{$.L.T "asg.newdeadline"}} <input name="deadline" type="datetime-local"></label>
+      <button>{{$.L.T "asg.setext"}}</button>
     </form>
     {{end}}
     {{end}}

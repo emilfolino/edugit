@@ -2,53 +2,53 @@
     {{with .Pull}}
     {{$base := printf "/courses/%s/repos/%s/pulls/%d" $.Course.Slug .Repo .PR.Number}}
     <h1>#{{.PR.Number}} {{.PR.Title}}</h1>
-    <p class="meta"><a href="/courses/{{$.Course.Slug}}/repos/{{.Repo}}/pulls">Pull requests</a> · {{.PR.State}} · {{.PR.Author}} · <code>{{.PR.Head}}</code> → <code>{{.PR.Base}}</code></p>
+    <p class="meta"><a href="/courses/{{$.Course.Slug}}/repos/{{.Repo}}/pulls">{{$.L.T "browse.pulls"}}</a> · {{$.L.Value "state" .PR.State}} · {{.PR.Author}} · <code>{{.PR.Head}}</code> → <code>{{.PR.Base}}</code></p>
     {{if $.Error}}<p class="error" role="alert">{{$.Error}}</p>{{end}}
     {{if .PR.Body}}<p class="prbody">{{.PR.Body}}</p>{{end}}
-    {{if eq .PR.State "merged"}}<p class="notice">Merged as <code>{{.PR.MergeCommit}}</code>.</p>{{end}}
+    {{if eq .PR.State "merged"}}<p class="notice">{{$.L.T "pull.mergedas"}} <code>{{.PR.MergeCommit}}</code>.</p>{{end}}
     {{if eq .PR.State "open"}}
-    {{if .Gone}}<p class="error">A branch of this pull request no longer exists.</p>
+    {{if .Gone}}<p class="error">{{$.L.T "pull.gone"}}</p>
     {{else}}
     {{if .Checks}}
-    <h2>Checks</h2>
-    <ul>{{range .Checks}}<li><a href="{{$.Pull.ChecksURL}}/{{.ID}}">{{.Job}}</a>: {{.Status}}</li>{{end}}</ul>
+    <h2>{{$.L.T "browse.ci"}}</h2>
+    <ul>{{range .Checks}}<li><a href="{{$.Pull.ChecksURL}}/{{.ID}}">{{.Job}}</a>: {{$.L.Value "cistatus" .Status}}</li>{{end}}</ul>
     {{end}}
-    <h2>Commits ({{len .Commits}})</h2>
+    <h2>{{$.L.T "pull.commits" (len .Commits)}}</h2>
     <ul class="commits">{{range .Commits}}<li><code>{{printf "%.8s" .SHA}}</code> {{.Subject}} <span class="meta">{{.Author}}</span></li>{{end}}</ul>
-    {{if .Mergeable}}<p class="notice">No conflicts with the base branch.</p>{{else}}<p class="error">This branch conflicts with the base branch.</p>{{end}}
+    {{if .Mergeable}}<p class="notice">{{$.L.T "pull.noconflict"}}</p>{{else}}<p class="error">{{$.L.T "pull.conflict"}}</p>{{end}}
     {{end}}
     {{if .CanWrite}}
     {{if and .Mergeable (not .Gone)}}
     <form data-confirm="{{$.L.T "confirm.merge"}}" method="post" action="{{$base}}/merge">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <select name="strategy" aria-label="Merge strategy">
-        <option value="merge">Merge commit</option>
-        <option value="squash">Squash</option>
-        <option value="rebase">Rebase</option>
+      <select name="strategy" aria-label="{{$.L.T "pull.strategy"}}">
+        <option value="merge">{{$.L.T "pull.s.merge"}}</option>
+        <option value="squash">{{$.L.T "pull.s.squash"}}</option>
+        <option value="rebase">{{$.L.T "pull.s.rebase"}}</option>
       </select>
-      <button>Merge</button>
+      <button>{{$.L.T "pull.merge"}}</button>
     </form>
     {{end}}
     <form method="post" action="{{$base}}/close" class="inline">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <button>Close</button>
+      <button>{{$.L.T "pull.close"}}</button>
     </form>
     {{end}}
     {{if not .Gone}}
-    <h2>Changes</h2>
-    <p class="meta">{{if .Split}}<a href="{{$base}}">Unified</a> · Split{{else}}Unified · <a href="{{$base}}?view=split">Split</a>{{end}}</p>
+    <h2>{{$.L.T "pull.changes"}}</h2>
+    <p class="meta">{{if .Split}}<a href="{{$base}}">{{$.L.T "pull.unified"}}</a> · {{$.L.T "pull.split"}}{{else}}{{$.L.T "pull.unified"}} · <a href="{{$base}}?view=split">{{$.L.T "pull.split"}}</a>{{end}}</p>
     {{range .Files}}
     <section class="diff-file">
-      <h3><code>{{.Path}}</code> <span class="meta">{{.Status}}{{if .Binary}} · binary{{else}} · +{{.Added}} −{{.Removed}}{{end}}</span></h3>
+      <h3><code>{{.Path}}</code> <span class="meta">{{$.L.Value "filestatus" .Status}}{{if .Binary}} · {{$.L.T "common.binary"}}{{else}} · +{{.Added}} −{{.Removed}}{{end}}</span></h3>
       {{if $.Pull.CanReview}}{{if not .Binary}}
-      <details class="inlinecomment"><summary>Comment on a line</summary>
+      <details class="inlinecomment"><summary>{{$.L.T "pull.lineComment"}}</summary>
         <form method="post" class="stack" action="{{$base}}/comments">
           <input type="hidden" name="csrf" value="{{$.CSRF}}">
           <input type="hidden" name="path" value="{{.Path}}">
-          <label>Line (new file) <input name="line" type="number" min="1" required></label>
-          <label>Comment <textarea name="body" rows="3" required></textarea></label>
-          <label>Suggested replacement (optional) <textarea name="suggestion" rows="2"></textarea></label>
-          <button>Comment</button>
+          <label>{{$.L.T "pull.line"}} <input name="line" type="number" min="1" required></label>
+          <label>{{$.L.T "common.comment"}} <textarea name="body" rows="3" required></textarea></label>
+          <label>{{$.L.T "pull.suggest"}} <textarea name="suggestion" rows="2"></textarea></label>
+          <button>{{$.L.T "common.comment"}}</button>
         </form>
       </details>
       {{end}}{{end}}
@@ -78,56 +78,56 @@
     {{if .CanWrite}}
     <form method="post" action="{{$base}}/reopen">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <button>Reopen</button>
+      <button>{{$.L.T "pull.reopen"}}</button>
     </form>
     {{end}}
     {{end}}
     <section id="discussion">
-    <h2>Review</h2>
-    <p class="meta">Approvals on the latest commit: {{.Approval.Approvals}}{{if .Required}} of {{.Required}} required{{end}}{{if .Approval.ChangesRequested}} · changes requested by {{.Approval.ChangesRequested}}{{end}}{{if .Requested}} · review requested from {{range $i, $n := .Requested}}{{if $i}}, {{end}}{{$n}}{{end}}{{end}}</p>
+    <h2>{{$.L.T "pull.review"}}</h2>
+    <p class="meta">{{$.L.T "pull.approvals" .Approval.Approvals}}{{if .Required}} {{$.L.T "pull.ofrequired" .Required}}{{end}}{{if .Approval.ChangesRequested}} · {{$.L.T "pull.changesby" .Approval.ChangesRequested}}{{end}}{{if .Requested}} · {{$.L.T "pull.requestedfrom"}} {{range $i, $n := .Requested}}{{if $i}}, {{end}}{{$n}}{{end}}{{end}}</p>
     {{range .Reviews}}
-    <article class="review"><p class="meta">{{.Reviewer}} · {{if eq .State "approve"}}approved{{else if eq .State "request_changes"}}requested changes{{else}}commented{{end}} · <code>{{printf "%.8s" .CommitSHA}}</code></p>{{if .Body}}<p class="prbody">{{.Body}}</p>{{end}}</article>
+    <article class="review"><p class="meta">{{.Reviewer}} · {{if eq .State "approve"}}{{$.L.T "pull.approved"}}{{else if eq .State "request_changes"}}{{$.L.T "pull.reqchanges"}}{{else}}{{$.L.T "pull.commented"}}{{end}} · <code>{{printf "%.8s" .CommitSHA}}</code></p>{{if .Body}}<p class="prbody">{{.Body}}</p>{{end}}</article>
     {{end}}
     {{range .Comments}}
     <article class="review{{if .Resolved}} resolved{{end}}" id="comment-{{.ID}}">
-      <p class="meta">{{.Author}}{{if .Path}} · <code>{{.Path}}:{{.Line}}</code>{{end}}{{if .Resolved}} · resolved{{end}}</p>
+      <p class="meta">{{.Author}}{{if .Path}} · <code>{{.Path}}:{{.Line}}</code>{{end}}{{if .Resolved}} · {{$.L.T "pull.resolved"}}{{end}}</p>
       <p class="prbody">{{.Body}}</p>
       {{if $.Pull.CanReview}}
       <form method="post" class="inline" action="{{$base}}/comments/{{.ID}}/resolve">
         <input type="hidden" name="csrf" value="{{$.CSRF}}">
         <input type="hidden" name="resolved" value="{{if .Resolved}}0{{else}}1{{end}}">
-        <button>{{if .Resolved}}Unresolve{{else}}Resolve{{end}}</button>
+        <button>{{if .Resolved}}{{$.L.T "pull.unresolve"}}{{else}}{{$.L.T "pull.resolve"}}{{end}}</button>
       </form>
       {{end}}
     </article>
     {{end}}
     {{if .CanReview}}
-    <h3>Add a comment</h3>
+    <h3>{{$.L.T "pull.addcomment"}}</h3>
     <form method="post" class="stack" action="{{$base}}/comments">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <label>Comment <textarea name="body" rows="3" required></textarea></label>
-      <button>Comment</button>
+      <label>{{$.L.T "common.comment"}} <textarea name="body" rows="3" required></textarea></label>
+      <button>{{$.L.T "common.comment"}}</button>
     </form>
-    <h3>Submit a review</h3>
+    <h3>{{$.L.T "pull.submitreview"}}</h3>
     <form method="post" class="stack" action="{{$base}}/reviews">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <label>Verdict
+      <label>{{$.L.T "pull.verdict"}}
         <select name="state">
-          <option value="comment">Comment</option>
-          <option value="approve">Approve</option>
-          <option value="request_changes">Request changes</option>
+          <option value="comment">{{$.L.T "common.comment"}}</option>
+          <option value="approve">{{$.L.T "pull.approve"}}</option>
+          <option value="request_changes">{{$.L.T "pull.requestchanges"}}</option>
         </select>
       </label>
-      <label>Summary <textarea name="body" rows="3"></textarea></label>
-      <button>Submit review</button>
+      <label>{{$.L.T "pull.summary"}} <textarea name="body" rows="3"></textarea></label>
+      <button>{{$.L.T "pull.submit"}}</button>
     </form>
     {{end}}
     {{if .CanRequest}}
-    <h3>Request a reviewer</h3>
+    <h3>{{$.L.T "pull.reqreviewer"}}</h3>
     <form method="post" class="stack" action="{{$base}}/reviewers">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <label>Username <input name="reviewer" required></label>
-      <button>Request review</button>
+      <label>{{$.L.T "pull.username"}} <input name="reviewer" required></label>
+      <button>{{$.L.T "pull.reqreview"}}</button>
     </form>
     {{end}}
     </section>

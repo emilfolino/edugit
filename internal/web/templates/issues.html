@@ -1,47 +1,47 @@
 {{template "head" .}}
     {{with .Issues}}
-    <h1>Issues</h1>
+    <h1>{{$.L.T "browse.issues"}}</h1>
     <p class="meta"><a href="/courses/{{$.Course.Slug}}">{{$.Course.Title}}</a> · {{.Repo}} ·
       <a href="{{.Base}}/../tree">{{$.L.T "browse.code"}}</a> · <a href="{{.Base}}/../pulls">{{$.L.T "browse.pulls"}}</a></p>
     {{if $.Error}}<p class="error" role="alert">{{$.Error}}</p>{{end}}
     <p class="meta">
-      <a href="{{.Base}}?state=open{{if .Label}}&amp;label={{.Label}}{{end}}">open</a> ·
-      <a href="{{.Base}}?state=closed{{if .Label}}&amp;label={{.Label}}{{end}}">closed</a> ·
-      <a href="{{.Base}}?state=all{{if .Label}}&amp;label={{.Label}}{{end}}">all</a>
-      {{if .Labels}}| labels:{{$st := .State}}{{range .Labels}} <a href="{{$.Issues.Base}}?state={{$st}}&amp;label={{.}}">{{.}}</a>{{end}}{{end}}
-      {{if .Label}}| <a href="{{.Base}}?state={{.State}}">clear label filter</a>{{end}}
+      <a href="{{.Base}}?state=open{{if .Label}}&amp;label={{.Label}}{{end}}">{{$.L.T "common.open"}}</a> ·
+      <a href="{{.Base}}?state=closed{{if .Label}}&amp;label={{.Label}}{{end}}">{{$.L.T "common.closed"}}</a> ·
+      <a href="{{.Base}}?state=all{{if .Label}}&amp;label={{.Label}}{{end}}">{{$.L.T "common.all"}}</a>
+      {{if .Labels}}| {{$.L.T "issues.labelsfilter"}}:{{$st := .State}}{{range .Labels}} <a href="{{$.Issues.Base}}?state={{$st}}&amp;label={{.}}">{{.}}</a>{{end}}{{end}}
+      {{if .Label}}| <a href="{{.Base}}?state={{.State}}">{{$.L.T "issues.clear"}}</a>{{end}}
     </p>
     {{if .Issues}}
     <table>
-      <thead><tr><th>#</th><th>Title</th><th>Labels</th><th>Assignees</th><th>Milestone</th><th>State</th></tr></thead>
+      <thead><tr><th>#</th><th>{{$.L.T "common.title"}}</th><th>{{$.L.T "common.labels"}}</th><th>{{$.L.T "issue.assignees"}}</th><th>{{$.L.T "common.milestone"}}</th><th>{{$.L.T "common.state"}}</th></tr></thead>
       <tbody>
       {{range .Issues}}
       <tr><td>{{.Number}}</td><td><a href="{{$.Issues.Base}}/{{.Number}}">{{.Title}}</a></td>
-        <td>{{range .Labels}}<code>{{.}}</code> {{end}}</td><td>{{range .Assignees}}{{.}} {{end}}</td><td>{{.Milestone}}</td><td>{{.State}}</td></tr>
+        <td>{{range .Labels}}<code>{{.}}</code> {{end}}</td><td>{{range .Assignees}}{{.}} {{end}}</td><td>{{.Milestone}}</td><td>{{$.L.Value "state" .State}}</td></tr>
       {{end}}
       </tbody>
     </table>
-    {{else}}<p>No issues here.</p>{{end}}
+    {{else}}<p>{{$.L.T "issues.none"}}</p>{{end}}
     {{if .Milestones}}
-    <h2>Milestones</h2>
-    <ul>{{range .Milestones}}<li>{{.Title}}{{if .DueDate}} (due {{.DueDate}}){{end}}: {{.Open}} open, {{.Closed}} closed</li>{{end}}</ul>
+    <h2>{{$.L.T "issues.milestones"}}</h2>
+    <ul>{{range .Milestones}}<li>{{.Title}}{{if .DueDate}} ({{$.L.T "issues.due" .DueDate}}){{end}}: {{$.L.T "issues.counts" .Open .Closed}}</li>{{end}}</ul>
     {{end}}
     {{if .CanIssue}}
-    <h2>New issue</h2>
+    <h2>{{$.L.T "issues.new"}}</h2>
     <form method="post" class="stack" action="{{.Base}}">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <label>Title <input name="title" maxlength="200" required></label>
-      <label>Description <textarea name="body" rows="4"></textarea></label>
-      <button>Open issue</button>
+      <label>{{$.L.T "common.title"}} <input name="title" maxlength="200" required></label>
+      <label>{{$.L.T "common.description"}} <textarea name="body" rows="4"></textarea></label>
+      <button>{{$.L.T "issues.open"}}</button>
     </form>
     {{end}}
     {{if .CanManage}}
-    <h2>New milestone</h2>
+    <h2>{{$.L.T "issues.newms"}}</h2>
     <form method="post" class="stack" action="{{.Base}}/milestones">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <label>Title <input name="title" maxlength="100" required></label>
-      <label>Due date <input name="due" type="date"></label>
-      <button>Save milestone</button>
+      <label>{{$.L.T "common.title"}} <input name="title" maxlength="100" required></label>
+      <label>{{$.L.T "issues.duedate"}} <input name="due" type="date"></label>
+      <button>{{$.L.T "issues.savems"}}</button>
     </form>
     {{end}}
     {{end}}

@@ -1,8 +1,8 @@
 {{template "head" .}}
     {{with .Grading}}
-    <h1>Grading: {{$.Asg.Title}}</h1>
+    <h1>{{$.L.T "grading.title" $.Asg.Title}}</h1>
     <p class="meta"><a href="/courses/{{$.Course.Slug}}/assignments/{{$.Asg.Slug}}">{{$.Asg.Title}}</a> ·
-      <a href="/courses/{{$.Course.Slug}}/assignments/{{$.Asg.Slug}}/grades.csv">Export grades (CSV)</a></p>
+      <a href="/courses/{{$.Course.Slug}}/assignments/{{$.Asg.Slug}}/grades.csv">{{$.L.T "common.exportcsv"}}</a></p>
     {{if $.Error}}<p class="error" role="alert">{{$.Error}}</p>{{end}}
     {{if .Repo}}
     <h2>{{.Repo}}</h2>
@@ -12,36 +12,36 @@
       {{$g := .}}{{range .Rubric}}
       <label>{{.Title}} (0-{{.MaxPoints}}) <input name="score-{{.ID}}" type="number" min="0" max="{{.MaxPoints}}" value="{{index $g.Scores .ID}}"></label>
       {{end}}
-      <label>Feedback <textarea name="feedback" rows="6" maxlength="10000">{{.Comment}}</textarea></label>
-      <button>Save grade</button>
+      <label>{{$.L.T "grading.feedback"}} <textarea name="feedback" rows="6" maxlength="10000">{{.Comment}}</textarea></label>
+      <button>{{$.L.T "grading.savegrade"}}</button>
     </form>
-    {{else}}<p>Add rubric criteria first.</p>{{end}}
+    {{else}}<p>{{$.L.T "grading.addfirst"}}</p>{{end}}
     {{else}}
-    <h2>Rubric</h2>
+    <h2>{{$.L.T "grading.rubric"}}</h2>
     {{if .Rubric}}
     <table>
-      <thead><tr><th>Criterion</th><th>Points</th><th></th></tr></thead>
+      <thead><tr><th>{{$.L.T "grading.criterion"}}</th><th>{{$.L.T "common.points"}}</th><th></th></tr></thead>
       <tbody>{{range .Rubric}}<tr><td>{{.Title}}</td><td>{{.MaxPoints}}</td><td>
-        <form method="post" action="{{$.Grading.Base}}/rubric/{{.ID}}/delete" class="inline" data-confirm="Delete this criterion and its scores?">
-          <input type="hidden" name="csrf" value="{{$.CSRF}}"><button>Delete</button>
+        <form method="post" action="{{$.Grading.Base}}/rubric/{{.ID}}/delete" class="inline" data-confirm="{{$.L.T "grading.confirmdelete"}}">
+          <input type="hidden" name="csrf" value="{{$.CSRF}}"><button>{{$.L.T "common.delete"}}</button>
         </form></td></tr>{{end}}</tbody>
     </table>
-    <p class="meta">Total: {{.Max}} points</p>
-    {{else}}<p>No criteria yet.</p>{{end}}
+    <p class="meta">{{$.L.T "grading.total" .Max}}</p>
+    {{else}}<p>{{$.L.T "grading.nocriteria"}}</p>{{end}}
     <form method="post" action="{{.Base}}/rubric" class="stack">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <label>Criterion <input name="title" required maxlength="120"></label>
-      <label>Max points <input name="max" type="number" min="1" max="1000" required></label>
-      <button>Add criterion</button>
+      <label>{{$.L.T "grading.criterion"}} <input name="title" required maxlength="120"></label>
+      <label>{{$.L.T "grading.maxpoints"}} <input name="max" type="number" min="1" max="1000" required></label>
+      <button>{{$.L.T "grading.add"}}</button>
     </form>
-    <h2>Repositories</h2>
+    <h2>{{$.L.T "common.repositories"}}</h2>
     {{if .Repos}}
     <table>
-      <thead><tr><th>Repository</th><th>Owner</th><th>Grade</th></tr></thead>
+      <thead><tr><th>{{$.L.T "common.repository"}}</th><th>{{$.L.T "common.owner"}}</th><th>{{$.L.T "grading.grade"}}</th></tr></thead>
       <tbody>{{range .Repos}}<tr><td><a href="{{$.Grading.Base}}/{{.Name}}">{{.Name}}</a></td><td>{{.Owner}}</td>
         <td>{{if .Graded}}{{.Points}} / {{$.Grading.Max}}{{else}}–{{end}}</td></tr>{{end}}</tbody>
     </table>
-    {{else}}<p>No repositories yet.</p>{{end}}
+    {{else}}<p>{{$.L.T "common.norepos"}}</p>{{end}}
     {{end}}
     {{end}}
 {{template "foot"}}

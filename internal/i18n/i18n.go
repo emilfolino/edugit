@@ -69,3 +69,17 @@ func (l Lang) Code() string { return string(l) }
 
 // Name is the language's name in itself, for the switcher.
 func (l Lang) Name() string { return catalogs[l]["lang.name"] }
+
+// Value translates a stored value (a role, state or status) for display
+// under the key "prefix.value", and returns the value unchanged when the
+// catalog has no such key, so unknown values never show as keys.
+func (l Lang) Value(prefix, value string) string {
+	key := prefix + "." + value
+	if msg, ok := catalogs[l][key]; ok {
+		return msg
+	}
+	if msg, ok := en[key]; ok {
+		return msg
+	}
+	return value
+}
